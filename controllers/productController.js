@@ -11,6 +11,7 @@ exports.catalogo = functions.getAll(Product);
 //REVISAR, temporal tambien verlo en factory handler
 //revisar que cuando se creen no se creen duplicados de los ya existentes, ver si lo puedo dejar como una validacion opcional
 exports.createProduct = catchAsync(async (req,res,next) => {
+    console.log(req.body)
     const doc = await Product.create({
         name: req.body.name,
         descr: req.body.descr,
@@ -25,6 +26,15 @@ exports.createProduct = catchAsync(async (req,res,next) => {
         data: {doc}
     });
 });
+
+exports.updateFromCategory = catchAsync(async (req,res,next) => {
+    console.log(req.body)
+    const data = await Product.updateMany({category: req.body.oldInfo}, {category: req.body.newInfo}, {runValidators: true} )
+    res.status(200).json({
+        status: 'success',
+        data,//temporal, revisar si sacar estas cosas
+    })
+})
 
 //revisar como puedo refactorizar esto despues
 // exports.createProduct = functions.createOne(Product, {

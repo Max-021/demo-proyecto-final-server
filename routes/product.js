@@ -16,6 +16,13 @@ router.route('/').post(
 );
 router.route('/one').get(authController.protect, productController.getOnlyOne);
 router
+    .route('/changedCategory')
+    .patch(
+        authController.protect,
+        authController.restrict('admin'),
+        productController.updateFromCategory,
+    );
+router
     .route('/:id')//REVISAR esto del id, temporal, tengo que ver que parametro pasar
     .get(productController.getProduct)
     .patch(

@@ -12,6 +12,7 @@ router.route('/')
         authController.restrict('admin'),
         enumFieldsController.createEnumField,
     );
+router.route('/categories').get(enumFieldsController.getCategories);
 
 router.route('/:id')
     .get(enumFieldsController.getEnumField)
