@@ -16,12 +16,19 @@ router.route('/').post(
 );
 router.route('/one').get(authController.protect, productController.getOnlyOne);
 router
-    .route('/changedCategory')
+    .route('/changedSimpleField')
     .patch(
         authController.protect,
         authController.restrict('admin'),
-        productController.updateFromCategory,
+        productController.updateFromSingleEnumField,
     );
+router
+    .route('/changedArrayField')
+    .patch(
+        authController.protect,
+        authController.restrict('admin'),
+        productController.updateFromArrayEnumField,
+    )
 router
     .route('/:id')//REVISAR esto del id, temporal, tengo que ver que parametro pasar
     .get(productController.getProduct)
