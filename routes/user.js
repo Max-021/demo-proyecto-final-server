@@ -16,16 +16,16 @@ más de código
 router.use(authController.protect);
 
 //protected routes
-router.get('/userInfo/:id', userController.user);
+router.get('/userInfo', authController.getUserInfo);
 router.patch('/newPassword',authController.retryPassword);//chequear que el reinicio de la contraseña sea correcto, temporal
 router.patch('/updateMe',userController.updateUser);
-router.delete('/deleteMe',userController.deactivateMe);
+router.delete('/deleteMe/:id',userController.deactivateMe);
 
 //middleware para restringir ciertas acciones al administrador, comentado porque esta dentro de las funciones
 router.use('/restrict',authController.restrict('admin'));
 
 //restricted routes
 router.route('/usersList').get(userController.getUsers);
-router.route('/userInfo/:id').delete(userController.deleteUser);
+router.route('/userInfo/:id').delete(userController.deactivateMe);
 
 module.exports = router;

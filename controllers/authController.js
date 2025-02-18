@@ -37,7 +37,7 @@ const createSendToken = (user, statusCode, req, res) => {
         status: 'success',
         token,//borrar para que no aparezca en prod
         data:{
-            user: user.username,//revisar si mandar esto o no, temporal
+            user: user._id,//revisar si mandar esto o no, temporal
         },
     });
     // res.send();//temporal, revisar al final si queda o no esto, el problema del guardado de cookies ya deberia estar resuelto con lo puesto en cookieOps
@@ -169,6 +169,24 @@ exports.restrict = (...roles) => {
         next();
     }
 }
+
+exports.getUserInfo = catchAsync(async (req,res,next) =>{
+
+    const fieldsNeeded = 'username mail userRole'//temporal, ver si muevo esto a un mejor lugar y tambien revisar la adaptabilidad a más/distintos campos de esta configuracion
+    //para que funcione de manera mas óptima
+    if(req.cookies.jwt){
+        const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
+        const freshUser = await User.findById(decoded.id,fieldsNeeded);
+        if(!freshUser){
+            return next(new AppError("The user belonging to this token no longer exists", 401));
+        }
+        res.status(200).json({
+            status:'success',
+            data: freshUser,
+        })
+
+    }
+})
 
 exports.passwordForgotten = catchAsync(async (req, res, next) => {
     const user = await User.findOne({mail: req.body.mail});

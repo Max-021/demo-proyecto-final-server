@@ -9,10 +9,17 @@ const AppError = require('../auxiliaries/appError');
 exports.user = functions.getOne(User);
 exports.updateUser = functions.updateOne(User)
 exports.deleteUser = functions.deleteOne(User)
-exports.getUsers = functions.getAll(User)//revisar si hace falta esto, por las dudas lo puse en acceso restringido, hay que estar logueado y con permisos de administrador
+exports.getUsers = catchAsync(async (req,res,next) => {
+    const fieldsRequired = 'username mail userRole'
+    const info = await User.find().select(fieldsRequired).lean();
+    res.status(200).json({
+        status: 'success',
+        data: info,
+    })
+})
 
 exports.deactivateMe = catchAsync(async (req,res,next) => {
-    await User.findByIdAndUpdate(req.user.id, {isActive: false});
+    await User.findByIdAndUpdate(req.params.id, {isActive: false});
     res.status(204).json({
         status: 'success',
         data: null,

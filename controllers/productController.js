@@ -36,17 +36,6 @@ exports.updateFromSingleEnumField = catchAsync(async (req,res,next) => {
         data,//temporal, revisar si sacar estas cosas
     })
 })
-
-//updateFromArrayEnumField
-// exports.updateFromArrayEnumField = catchAsync(async (req,res,next) =>{
-//     console.log(req.body)
-//     const data = await Product.updateMany({}, { $pull: { [req.body.fieldName]: { $in: [req.body.oldInfo] } } } );
-//     console.log(data)
-//     res.status(200).json({
-//         status: 'success',
-//         data,
-//     })
-// })
 exports.updateFromArrayEnumField = catchAsync(async (req, res, next) => {
     console.log(req.body);
 
@@ -72,15 +61,11 @@ exports.updateFromArrayEnumField = catchAsync(async (req, res, next) => {
     });
 });
 
-
-
 //revisar como puedo refactorizar esto despues, temporal
 // exports.createProduct = functions.createOne(Product, {?????
-
 // });
 exports.getProduct = functions.getOne(Product);
 exports.updateProduct = functions.updateOne(Product);
 exports.deleteProduct = functions.deleteOne(Product);
 
-//esto seria para poder leer los datos y armar un formulario
-exports.getOnlyOne = functions.getJustOne(Product);
+exports.getOnlyOne = functions.getJustOne(Product);//esto es para obtener el modelo del producto en este caso
