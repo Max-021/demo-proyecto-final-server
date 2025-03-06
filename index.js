@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+require('dotenv').config({ path: './config.env' });
 const morgan = require('morgan');
 const helmet = require('helmet');
 const xss = require('xss-clean');
@@ -9,6 +10,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
+const formidableMiddleware = require('express-formidable');
 
 const AppError = require('./auxiliaries/appError');
 const productRouter = require('./routes/product');
@@ -34,6 +36,7 @@ app.use('/api',limiter);
 app.use(express.json({limit: '10kb'}));
 app.use(express.urlencoded({extended: true,limit:'10kb'}));
 app.use(cookieParser());
+app.use(formidableMiddleware({multiples:true}));
 
 app.use(cors({
     origin: allowedOrigins,
@@ -60,6 +63,7 @@ app.use(`${apiUrl}/products`, productRouter);
 app.use(`${apiUrl}/enumFields`,enumFieldsRouter);
 
 app.use((err,req,res,next) => {
+    console.log("undefined?")
     console.error(err.stack);
 
     if(err instanceof AppError){
@@ -72,6 +76,7 @@ app.use((err,req,res,next) => {
     res.status(500).json({
         status: 'error',
         message: 'Something went wrong!',
+        err: err.stack//temporal, borrar
     })
 });
 

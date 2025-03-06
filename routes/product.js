@@ -3,6 +3,7 @@ const express = require('express');
 
 const productController = require('../controllers/productController');
 const authController = require('../controllers/authController');
+const imgFunctions = require('../auxiliaries/imgHandler');
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ router.route('/').get(productController.catalogo);
 router.route('/').post(
     authController.protect,
     authController.restrict('admin'),
+    imgFunctions.uploadImgs,
     productController.createProduct,//temporal, revisar si hacer algo especial por el tema de las imagenes
 );
 router.route('/one').get(authController.protect, productController.getOnlyOne);
