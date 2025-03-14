@@ -21,10 +21,11 @@ exports.uploadImgs = catchAsync(async (req, res, next) => {
     // Si se enviaron archivos (nuevas imágenes) a través de formidable:
     console.log(req.files)
     console.log(req.files.img)
-    if (req.files && req.files['img[]']) {
+    if (req.files && (req.files['img[]'] || req.files.img)) {
       console.log("entro al primer if")
       const filesArray = Array.isArray(req.files['img[]'])
         ? req.files['img[]']
+        : Array.isArray(req.files.img) ? req.files.img
         : [req.files['img[]']];
       images = images.concat(filesArray);
       console.log(images)
