@@ -117,6 +117,8 @@ const checkEachEnumArray = (obj) =>{
     catchAsync(async (req,res,next) => {
         var doc = await Model.findOne();
 
+        console.log("llego")
+        console.log(req.body)
         if(!doc) {
             checkEachEnumArray(req.body)
             doc = await Model.create(req.body)

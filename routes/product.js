@@ -1,5 +1,6 @@
 //aca van las rutas de productos, cambiarlas acorde a las necesidades de cada proyecto
 const express = require('express');
+const formidableMiddleware = require('express-formidable');
 
 const productController = require('../controllers/productController');
 const authController = require('../controllers/authController');
@@ -13,8 +14,9 @@ router.route('/').get(productController.catalogo);
 router.route('/').post(
     authController.protect,
     authController.restrict('admin'),
+    formidableMiddleware({multiples: true}),
     imgFunctions.uploadImgs,
-    productController.createProduct,//temporal, revisar si hacer algo especial por el tema de las imagenes
+    productController.createProduct,
 );
 router.route('/one').get(authController.protect, productController.getOnlyOne);
 router
@@ -32,12 +34,14 @@ router
         productController.updateFromArrayEnumField,
     )
 router
-    .route('/:id')//REVISAR esto del id, temporal, tengo que ver que parametro pasar
+    .route('/:id')//temporal, revisar tema vulnerabilidades con el pasaje del id
     .get(productController.getProduct)
     .patch(
         authController.protect,
         authController.restrict('admin'),
-        productController.updateProduct,//temporal, revisar si hacer algo especial por el tema de las imagenes
+        formidableMiddleware({multiples: true}),
+        imgFunctions.uploadImgs,
+        productController.updateProduct,
     )
     .delete(
         authController.protect,
