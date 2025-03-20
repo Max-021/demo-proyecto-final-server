@@ -19,7 +19,7 @@ const userRouter = require('./routes/user');
 const userBasicsRouter = require('./routes/userBasics');
 
 //IMPORTANTE, temporal, revisar como poner esto y tambien ver como lo protejo y si lo pongo en .env,
-const allowedOrigins = ['http://localhost:3000'];
+const allowedOrigins = ['http://localhost:3000', 'https://shoptemplateserver.onrender.com'];
 
 const app = express();
 
