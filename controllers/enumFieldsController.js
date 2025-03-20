@@ -29,6 +29,7 @@ exports.getCategories = catchAsync(async (req, res, next) => {
     const doc = await features.query;
     res.status(200).json({
         status: 'success',
-        data: doc[0].category,//solo la lista de categorias
+        // data: doc[0].category,//solo la lista de categorias
+        data: doc[0],
     })
 })
