@@ -20,7 +20,8 @@ const createSendToken = (user, statusCode, req, res) => {
         httpOnly: true,
         // secure: process.env.NODE_ENV === 'production' ? (req.secure || req.headers['x-forwarded-proto'] === 'https') : false,
         secure: true,//ver cual de los dos me quedo, temporal
-        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'none', // Protección contra CSRF, temporal-----------revisar si poner 'strict' o 'lax'
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Protección contra CSRF, temporal-----------revisar si poner 'strict' o 'lax'//temporal, solo para test en render
+        // sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'none', // Protección contra CSRF, temporal-----------revisar si poner 'strict' o 'lax'//temporal, es la que anda bien
         path: '/'
     };
     /*Evalúa sameSite dinámico según tus necesidades: Si tu cliente y servidor están en diferentes dominios (frontend y backend separados), 

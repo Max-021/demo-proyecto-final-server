@@ -23,6 +23,8 @@ mongoose.connect(DB)
 const port = normalizePort(process.env.PORT || '9000');//revisar esto para el deploy
 app.set('port', port);
 
+app.set('trust proxy', 1);
+
 //Create http server
 var server = http.createServer(app);
 
