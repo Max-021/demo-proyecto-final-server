@@ -18,8 +18,9 @@ router.use(authController.protect);
 //protected routes
 router.get('/userInfo', authController.getUserInfo);
 router.patch('/newPassword',authController.retryPassword);//chequear que el reinicio de la contraseña sea correcto, temporal
-router.patch('/updateMe',userController.updateUser);
+router.patch('/updateMe/:id',userController.updateUser);
 router.delete('/deleteMe/:id',userController.deactivateMe);
+router.patch('/changePassword', authController.updatePassword);
 
 //middleware para restringir ciertas acciones al administrador, comentado porque esta dentro de las funciones
 router.use('/restrict',authController.restrict('admin'));

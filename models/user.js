@@ -22,10 +22,32 @@ const userSchema = new mongoose.Schema({
         minlength: 8,
         required: [true,'A user must have a password'],
     },
-    userRole: {
+    role: {
         type: String,
         enum: ['admin','user'],
         default: 'user',
+    },
+    firstName: {
+        type: String,
+        trim: true,
+        default:'',
+    },
+    lastName: {
+        type: String,
+        trim: true,
+        default:'',
+    },
+    lastLogin: {
+        type: Date,
+        default: null,
+    },
+    lastLoginIp:{
+        type: String,
+        validate: {
+            validator: (ip) => validator.isIP(ip),
+            message: props => `${props.value} is not a valid Ip address`
+        },
+        default: null,
     },
     passwordChangedAt: Date,
     passwordResetToken: String,
@@ -35,13 +57,15 @@ const userSchema = new mongoose.Schema({
         default: true,
         select: false,
     },
+},
+{
+    timestamps:true,
 })
 
 userSchema.pre('save',async function (next) {
-
     //temporal, revisar la documentacion de bcrypt para saber como mejorar esto, en el github tienen mejores datos
+    if(!this.isModified('password')) return next();
     this.password = await bcrypt.hash(this.password, salt);
-
     next();
 })
 
@@ -53,27 +77,13 @@ userSchema.pre(/^find/, function (next){
 userSchema.methods.correctPassword = async function(candidatePassword,userPassword){
     return await bcrypt.compare(candidatePassword,userPassword)
 }
-
-userSchema.methods.changedPasswordAfter = async function(JWTTimeStamp){
-    if(this.passwordChangedAt) {
-        const changedTimeStamp = parseInt(
-            this.passwordChangedAt.getTime() / 1000,
-            10
-        );
-        //temporal, el return false queda porque se supone de lo que hice antes que el JWTTimeStamp < changedTimeStamp; no funciona como deberia revisar esto
-        // return false;
-        // return JWTTimeStamp < changedTimeStamp;
-        if(JWTTimeStamp > changedTimeStamp){
-            //cookie es mas reciente
-            return false
-        }else{
-            //cookie es mas vieja que el cambio de pwd
-            return true
-        }
-    }else{
-        return true
+userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+    if (this.passwordChangedAt) {
+      const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+      return JWTTimestamp < changedTimestamp; // true = la pwd cambió después de emitir el JWT
     }
-}
+    return false;
+  }
 
 userSchema.methods.createPasswordResetToken = function () {
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -89,3 +99,32 @@ userSchema.methods.createPasswordResetToken = function () {
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
+/* campos posibles para definir el modelo de usuario
+username: nombre de usuario
+email/mail: correo
+password: almacenar cifrada -------- salt: para reforzar el cifrado, usar siempre, no como campo en el modelo
+twoFactor: posible mejora a futuro, ver que campos usar
+passwordChangedAt: Date,
+passwordResetToken: String, //estos 3 para los cambios de contraseña
+passwordResetExpires: Date,
+
+firstName, lastName: campos de info del usuario
+displayName: opcional para mostrar en el front//poco probable que lo use
+avatarUrl: posible imagen de perfil, ver como combinar con multer
+birthDate: autoexplicativo
+gender: ????si sirve
+
+phone: ver si lo aplico junto con el twoFactor
+address, city, province, zipCode, country
+language,
+
+role
+status, ver si reemplazo el isActive por esto, que vendria con un enum [active, inactive, suspended y alguna mas]
+
+agregar  { timestamps: true} al final del objeto 
+
+lastLogin: con fecha para revisar el tema de log con cookies
+lastLoginIp: opcional de seguridad
+
+
+*/

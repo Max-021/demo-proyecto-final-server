@@ -4,7 +4,7 @@ const {promisify} = require('util');
 const User = require('../models/user');
 const catchAsync = require('../auxiliaries/catchAsync');
 const AppError = require('../auxiliaries/appError');
-const Email = require('../auxiliaries/mail')
+const Email = require('../auxiliaries/mail');
 
 //funciones de jwt
 const signToken = (id) => {
@@ -30,8 +30,7 @@ const createSendToken = (user, statusCode, req, res) => {
     */console.log("token creado");
 
     user.password = undefined;//temporal, cambiar acá segun las necesidades del cliente estos campos
-    user.userRole = undefined;
-    console.log(token)
+    user.role = undefined;
     if(process.env.NODE_ENV === 'production') cookieOps.secure = true;
     res.cookie('jwt', token, cookieOps);
     res.status(statusCode).json({
@@ -50,8 +49,12 @@ exports.signup = catchAsync(async (req,res,next) => {
     const newUser = await User.create({
         username: req.body.username,
         mail: req.body.mail,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
         password: req.body.password,
         passwordChangedAt: Date.now() - 1000,
+        lastLogin: Date.now(),
+        lastLoginIp: req.ip,
     });
     createSendToken(newUser, 201, req, res);
     const url = `${req.protocol}://${req.get("host")}/me`//revisar esto de la ruta que coincida con la pagina cliente y que la direccion sea de los datos del usuario, temporal
@@ -61,7 +64,6 @@ exports.signup = catchAsync(async (req,res,next) => {
 })
 
 exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta funcion
-    // console.log(req.cookies);
 
     if(req.cookies.jwt){
         try{
@@ -70,18 +72,20 @@ exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta 
 
             if(!freshUser){
                 console.log('fresh user not')
-                return next(new AppError("The user belonging to this token no longer exists", 401));
+                return next(new AppError("The user belonging to this token no longer exists.", 401));
             }
             if(await freshUser.changedPasswordAfter(decoded.iat)){
                 console.log('changed password')
-                return next(new AppError("Password changed recently, please log in again", 401));
+                return next(new AppError("Password changed recently, please log in again.", 401));
             }
             //temporal, agregar algo que tenga un tiempo de expiracion a la cookie
             res.locals.user = freshUser;
             // return next();
+            console.log('paso todas')
             res.status((200)).json({
                 status: 'success',
                 message:'logged',
+                userInfo: {role: freshUser.role, username: freshUser.username}
             })
         }catch(error){
             res.status(200).json({
@@ -94,6 +98,7 @@ exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta 
         res.status(200).json({
             status: 'success',
             message: 'No user logged in',
+            userInfo: {role: 'none', username: ''}
         })
         // return next(new AppError(`Couldn't determine user status`,404));
     }
@@ -103,14 +108,18 @@ exports.login = catchAsync(async (req,res,next) => {
     const {mail,password} = req.body;
 
     if(!mail || !password) {
-        return next(new AppError('Please provide email and/or password',400));
+        return next(new AppError('Please provide email and/or password.',400));
     }
     const user = await User.findOne({mail}).select("+password");
-    console.log(user)//temporal, borrar porque tiene info sensible
     if(!user || !(await user.correctPassword(password, user.password))){
         console.log(user)
-        return next(new AppError('Incorrect email or password',401));
+        return next(new AppError('Incorrect email or password.',401));
     }
+
+    user.lastLogin = Date.now();
+    user.lastLoginIp = req.ip;
+    user.save({validateBeforeSave: false}).catch(console.error);
+
     createSendToken(user, 200, req, res);
 })
 
@@ -138,7 +147,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     }
 
     if(!token){
-        return next(new AppError('To perform this action you must have logged in', 401));
+        return next(new AppError('To perform this action you must have logged in.', 401));
     }
 
     //verifico el token
@@ -147,7 +156,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     const freshUser = await User.findById(decoded.id)
 
     if(!freshUser){
-        return next(new AppError("The user does not exist",401));
+        return next(new AppError("The user does not exist.",401));
     }
 
     //temporal, funcion comentada porque se supone que no funciona como deberia, corregir, también reveer pertinencia de dar este tipo de informacion
@@ -162,18 +171,16 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 exports.restrict = (...roles) => {
     return (req, res, next) => {
-        if(req.user === undefined){
-            if(!roles.includes(req.user.userRole)) {
-                return next(new AppError(`You don't have permission to perform this action`, 403));
-            }
-        }
-        next();
+      if (!req.user || !roles.includes(req.user.role)) {
+        return next(new AppError(`You don't have permission.`, 403));
+      }
+      next();
     }
-}
+  }  
 
 exports.getUserInfo = catchAsync(async (req,res,next) =>{
 
-    const fieldsNeeded = 'username mail userRole'//temporal, ver si muevo esto a un mejor lugar y tambien revisar la adaptabilidad a más/distintos campos de esta configuracion
+    const fieldsNeeded = 'username mail role firstName lastName'//temporal, ver si muevo esto a un mejor lugar y tambien revisar la adaptabilidad a más/distintos campos de esta configuracion
     //para que funcione de manera mas óptima
     if(req.cookies.jwt){
         const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
@@ -235,13 +242,20 @@ exports.retryPassword = catchAsync(async (req, res, next) => {
     user.passwordResetExpires = undefined;
     await user.save();
 
-    createSendToken(user, 200,res);//revisar porqué solo res
+    createSendToken(user, 200, req, res);//revisar porqué solo res
 })
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
-    const user = await User.findById(req.user.id).select("+password");
+    const {password, newPassword, newPasswordConfirm} = req.body;    
+    if(!password || !newPassword || !newPasswordConfirm)        return next(new AppError("You must send current, new, and confirmed new password.",400));
+    if(newPassword !== newPasswordConfirm)                      return next(new AppError("The new password and its confirmation doesn't match.", 400));
+    if(password === newPassword)                                return next(new AppError('Your new password must be different from the current one.', 400));
 
-    user.password = req.body.password;
+    const user = await User.findById(req.user.id).select('+password');
+    if(!user)                                                   return next(new AppError('User not found.',404));
+    if(!(await user.correctPassword(password, user.password)))  return next(new AppError('Incorrect password.',401));
+
+    user.password = newPassword;
     await user.save();
-    createSendToken(user, 200, res);
+    return createSendToken(user, 200, req, res);
 })

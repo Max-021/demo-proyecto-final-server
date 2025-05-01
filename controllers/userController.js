@@ -10,7 +10,7 @@ exports.user = functions.getOne(User);
 exports.updateUser = functions.updateOne(User)
 exports.deleteUser = functions.deleteOne(User)
 exports.getUsers = catchAsync(async (req,res,next) => {
-    const fieldsRequired = 'username mail userRole'
+    const fieldsRequired = 'username mail role'//getUserInfo en authController tiene una lista parecida, revisar
     const info = await User.find().select(fieldsRequired).lean();
     res.status(200).json({
         status: 'success',
