@@ -23,10 +23,14 @@ router.delete('/deleteMe/:id',userController.deactivateMe);
 router.patch('/changePassword', authController.updatePassword);
 
 //middleware para restringir ciertas acciones al administrador, comentado porque esta dentro de las funciones
-router.use('/restrict',authController.restrict('admin'));
+// router.use('/restrict',authController.restrict('admin'));
+router.use(authController.restrict('admin'));
 
 //restricted routes
+router.route('/rolesList').get(userController.getRoles);
 router.route('/usersList').get(userController.getUsers);
 router.route('/userInfo/:id').delete(userController.deactivateMe);
+router.route('/toggleSuspension').patch(userController.toggleSuspension);
+router.route('/changeRole').patch(userController.changeUserRole);
 
 module.exports = router;

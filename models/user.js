@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const validator = require('validator');
 
 const salt = 12;
+const enumRole = ['admin', 'user', 'editor',];
+const enumStatus = ['active', 'inactive', 'suspended','locked'];
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -24,7 +26,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['admin','user'],
+        enum: enumRole,
         default: 'user',
     },
     firstName: {
@@ -49,14 +51,14 @@ const userSchema = new mongoose.Schema({
         },
         default: null,
     },
+    status: {
+        type: String,
+        enum: enumStatus,
+        default: 'active',
+    },
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
-    isActive: {
-        type: Boolean,
-        default: true,
-        select: false,
-    },
 },
 {
     timestamps:true,
@@ -70,9 +72,12 @@ userSchema.pre('save',async function (next) {
 })
 
 userSchema.pre(/^find/, function (next){
-    this.find({isActive: {$ne: false}})
+    this.find({status: {$ne: 'inactive'}})
     next();
 })
+userSchema.statics.getAllowedRoles = function() {
+    return this.schema.path('role').enumValues;
+};  
 
 userSchema.methods.correctPassword = async function(candidatePassword,userPassword){
     return await bcrypt.compare(candidatePassword,userPassword)
