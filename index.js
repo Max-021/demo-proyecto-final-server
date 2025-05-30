@@ -63,8 +63,8 @@ app.use(`${apiUrl}/products`, productRouter);
 app.use(`${apiUrl}/enumFields`,enumFieldsRouter);
 
 app.use((err,req,res,next) => {
-    console.log("undefined?")
     console.error(err.stack);
+    console.error(err.statusCode);
 
     if(err instanceof AppError){
         return res.status(err.statusCode).json({

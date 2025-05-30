@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,//temporal, revisar, tengo que ver que medidas de seguridad pongo aca + tambien ver otros lugares para proteger
         minlength: 8,
-        required: [true,'A user must have a password'],
+        required: [function() { return !this.passwordResetToken; }, 'A user must have a password.'],
     },
     role: {
         type: String,

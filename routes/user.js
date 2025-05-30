@@ -27,6 +27,7 @@ router.patch('/changePassword', authController.updatePassword);
 router.use(authController.restrict('admin'));
 
 //restricted routes
+router.route('/createUser').post(authController.createUser);
 router.route('/rolesList').get(userController.getRoles);
 router.route('/usersList').get(userController.getUsers);
 router.route('/userInfo/:id').delete(userController.deactivateMe);

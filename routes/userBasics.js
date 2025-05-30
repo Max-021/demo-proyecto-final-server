@@ -1,7 +1,6 @@
 //rutas principales sin middlewares de proteccion y/o restriccion
 const express = require('express');
 
-const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
 
 const router = express.Router();
@@ -12,6 +11,8 @@ router.post('/signup',authController.signup);//temporal, agregar en la funcion s
 router.post('/login',authController.login);
 router.post('/passwordForgotten',authController.passwordForgotten);
 router.patch('/retryPassword',authController.retryPassword);
+router.patch('/resetPassword/:token', authController.resetPassword);
+router.get('/validateResetToken/:token', authController.validateResetToken);
 
 
 module.exports = router;

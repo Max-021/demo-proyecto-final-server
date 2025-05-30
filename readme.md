@@ -37,4 +37,4 @@ Las funciones signUp, LogOut, logIn tienen que ser revisadas por si hay que hace
 
 ###Mail
 
-temporal, revisar y completar esta clase con todo lo necesario sobre los mails
+Los mails tienen varios tipos según el caso, particularmente para crear un usuario, hay dos metodos Welcome y WelcomeSignup con el primero siendo el mail que se envía cuando un administrador crea un usuario y el segundo para cuando un usuario crea su cuenta desde /signup en el cliente, con esta segunda opción estando inhabilitada por defecto. También se incluyen mails destinados a informar acciones realizadas tanto por el usuario como por el administrador.

@@ -3,8 +3,7 @@ const functions = require('./factoryHandler')
 
 const catchAsync = require('../auxiliaries/catchAsync');
 const AppError = require('../auxiliaries/appError');
-
-//crud basico
+const Email = require('../auxiliaries/mail');
 
 exports.user = functions.getOne(User);
 exports.updateUser = functions.updateOne(User)
@@ -19,7 +18,8 @@ exports.getUsers = catchAsync(async (req,res,next) => {
 })
 
 exports.deactivateMe = catchAsync(async (req,res,next) => {
-    await User.findByIdAndUpdate(req.params.id, {status: 'inactive'});
+    const user = await User.findByIdAndUpdate(req.params.id, {status: 'inactive'});
+    await new Email(user, '').userDeactivation();
     res.status(204).json({
         status: 'success',
         data: null,
@@ -40,12 +40,17 @@ exports.getRoles = catchAsync(async (req,res,next) =>{
 })
 
 exports.toggleSuspension = catchAsync(async (req,res,next) => {
-    console.log(req.body)
+    console.log(req.body)//temporal, fijarse de poder recibir y enviar por mail un motivo de suspensión
     if(!req.body._id || !req.body.status) return next(new AppError('An error ocurred and some fields are missing, retry.',400));
     
     let suspendedUser;
-    if(req.body.status === 'suspended') suspendedUser = await User.findByIdAndUpdate(req.body._id, {status: 'active'}, {new: true});
-    else if(req.body.status === 'active') suspendedUser = await User.findByIdAndUpdate(req.body._id, {status: 'suspended'}, {new: true});
+    if(req.body.status === 'suspended') {
+        suspendedUser = await User.findByIdAndUpdate(req.body._id, {status: 'active'}, {new: true});
+        await new Email(suspendedUser, '').userActivation();
+    }else if(req.body.status === 'active') {
+        suspendedUser = await User.findByIdAndUpdate(req.body._id, {status: 'suspended'}, {new: true});
+        await new Email(suspendedUser, '').userSuspension();
+    } 
 
     if(!suspendedUser) return next(new AppError('No user found with this id.', 404));
     
@@ -91,6 +96,7 @@ exports.changeUserRole = catchAsync(async (req,res,next) => {
     
     const updatedUser = await User.findByIdAndUpdate(req.body._id, {role: req.body.role}, {new: true})
     if(!updatedUser) return next(new AppError('No user found with this id.', 404));
+    await new Email(updatedUser, '', updatedUser.role).updatedRole();
 
     res.status(200).json({
         status: 'success',
