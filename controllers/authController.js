@@ -15,28 +15,22 @@ const createSendToken = (user, statusCode, req, res) => {
         expires: new Date( Date.now() + process.env.JWT_COOKIE_EXP * 24 * 60 * 60 * 1000),
         httpOnly: true,
         // secure: process.env.NODE_ENV === 'production' ? (req.secure || req.headers['x-forwarded-proto'] === 'https') : false,
-        secure: true,//ver cual de los dos me quedo, temporal
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Protección contra CSRF, temporal-----------revisar si poner 'strict' o 'lax'//temporal, solo para test en render
-        // sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'none', // Protección contra CSRF, temporal-----------revisar si poner 'strict' o 'lax'//temporal, es la que anda bien
-        path: '/'
+        secure: true,
+        // sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Protección contra CSRF, temporal-----------revisar si poner 'strict' o 'lax'//temporal, solo para test en render
+        sameSite: 'none', // Protección contra CSRF, temporal-----------revisar si poner 'strict' o 'lax'//temporal, solo para test en render
+        path: '/',
     };
     /*Evalúa sameSite dinámico según tus necesidades: Si tu cliente y servidor están en diferentes dominios (frontend y backend separados), 
-    usa sameSite: 'none' y asegúrate de que la cookie sea secure. Si están en el mismo dominio, sameSite: 'strict' está bien.
-    consejo de chatgpt 
-    */console.log("token creado");
-
-    user.password = undefined;//temporal, cambiar acá segun las necesidades del cliente estos campos
-    user.role = undefined;
-    if(process.env.NODE_ENV === 'production') cookieOps.secure = true;
+    usa sameSite: 'none' y asegúrate de que la cookie sea secure. Si están en el mismo dominio, sameSite: 'strict' está bien. consejo de chatgpt */
     res.cookie('jwt', token, cookieOps);
-    res.status(statusCode).json({
-        status: 'success',
-        token,//borrar para que no aparezca en prod
-        data:{
-            user: user._id,//revisar si mandar esto o no, temporal
-        },
-    });
-    // res.send();//temporal, revisar al final si queda o no esto, el problema del guardado de cookies ya deberia estar resuelto con lo puesto en cookieOps
+    setTimeout(() => {
+        console.log('esperando');
+        
+        res.status(statusCode).json({
+            status: 'success',
+            data:{ user: user._id, name: user.username, },
+        });
+    }, 5000);
 }
 
 //aca van todas las funciones referidas a la sesion de usuario y a la creacion de usuarios
@@ -105,21 +99,28 @@ exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta 
             // return next();
             res.status((200)).json({
                 status: 'success',
-                message:'logged',
-                userInfo: {role: freshUser.role, username: freshUser.username}
+                data: {
+                    message:'logged',
+                    userInfo: {role: freshUser.role, username: freshUser.username}
+                },
             })
         }catch(error){
             res.status(200).json({
                 status: 'success',
-                message: 'No user logged in',
+                data: {    
+                    message: 'No user logged in',
+                    userInfo: {role: '', username: ''},
+                },
             })
             // return next(new AppError('No user logged in',404));
         }
     }else{
         res.status(200).json({
             status: 'success',
-            message: 'No user logged in',
-            userInfo: {role: 'none', username: ''}
+            data: {
+                message: 'No user logged in',
+                userInfo: {role: 'none', username: ''}
+            },
         })
         // return next(new AppError(`Couldn't determine user status`,404));
     }
@@ -140,8 +141,9 @@ exports.login = catchAsync(async (req,res,next) => {
     user.lastLogin = Date.now();
     user.lastLoginIp = req.ip;
     user.save({validateBeforeSave: false}).catch(console.error);
+    const safeUser = {...user.toObject(), password: undefined, role: undefined, id: user._id};
 
-    createSendToken(user, 200, req, res);
+    createSendToken(safeUser, 200, req, res);
 })
 
 exports.logout = catchAsync(async (req,res) => {

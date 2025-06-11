@@ -41,17 +41,8 @@ const productSchema = new mongoose.Schema({
         type: [String],
         default: 'test.jpg',//agregar una validacion para que todos los campos de texto de acá verifiquen que la extension corresponda a una imagen, temporal
         required: true,
-    },
-    created_at: {
-        type: Date,
-        default: Date.now(),
-        select: false,
-    },
-    updated_at: {
-        type: Date,
-        default: null,
     }
-});
+}, {timestamps: true});
 
 const Product = mongoose.model('Product',productSchema);
 

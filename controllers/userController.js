@@ -41,55 +41,32 @@ exports.getRoles = catchAsync(async (req,res,next) =>{
 
 exports.toggleSuspension = catchAsync(async (req,res,next) => {
     console.log(req.body)//temporal, fijarse de poder recibir y enviar por mail un motivo de suspensión
-    if(!req.body._id || !req.body.status) return next(new AppError('An error ocurred and some fields are missing, retry.',400));
-    
-    let suspendedUser;
-    if(req.body.status === 'suspended') {
-        suspendedUser = await User.findByIdAndUpdate(req.body._id, {status: 'active'}, {new: true});
-        await new Email(suspendedUser, '').userActivation();
-    }else if(req.body.status === 'active') {
-        suspendedUser = await User.findByIdAndUpdate(req.body._id, {status: 'suspended'}, {new: true});
-        await new Email(suspendedUser, '').userSuspension();
-    } 
+    const { _id, status } = req.body;
+    if (! _id || ! status) return next(new AppError('Some fields are missing, retry.', 400));
 
-    if(!suspendedUser) return next(new AppError('No user found with this id.', 404));
-    
-    res.status(200).json({
-        status: 'success',
-        data: {
-            user: suspendedUser.username,
-            status: suspendedUser.status,
-        }
-    })
-      const { _id, status } = req.body;
-    if (!_id || !status) {
-        return next(new AppError('Some fields are missing, retry.', 400));
-    }
-
-    let filter, update;
+    let newStatus;
     if (status === 'active') {
-        filter = { _id, status: 'active' };
-        update = { status: 'suspended' };
+        newStatus = 'suspended';
     } else if (status === 'suspended') {
-        filter = { _id, status: 'suspended' };
-        update = { status: 'active' };
+        newStatus = 'active';
     } else {
         return next(new AppError(`Cannot toggle status from "${status}".`, 400));
     }
 
-    const user = await User.findOneAndUpdate(filter, update, { new: true });
-    if (!user) {
-        return next(new AppError('User not found or status not allowed for toggle.', 404));
+    const user = await User.findByIdAndUpdate(_id, { status: newStatus }, { new: true });
+    if (!user) return next(new AppError('User not found.', 404));
+    if (newStatus === 'suspended') {
+        await new Email(user, '').userSuspension();
+    } else {
+        await new Email(user, '').userActivation();
     }
 
-    res.status(200).json({
+    return res.status(200).json({
         status: 'success',
-        data: {
-        user: user.username,
-        status: user.status,
-        },
+        data: { user: user.username, status: user.status, },
     });
 })
+
 exports.changeUserRole = catchAsync(async (req,res,next) => {
     console.log(req.body)
     if(!req.body._id) return next(new AppError('An error ocurred and some fields are missing, retry.',400));
@@ -100,9 +77,6 @@ exports.changeUserRole = catchAsync(async (req,res,next) => {
 
     res.status(200).json({
         status: 'success',
-        data: {
-            user: updatedUser.username,
-            role: updatedUser.role,
-        }
+        data: { user: updatedUser.username,role: updatedUser.role, }
     })
 })

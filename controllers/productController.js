@@ -23,8 +23,6 @@ exports.createProduct = catchAsync(async (req,res,next) => {
         data: {doc}
     });
 });
-
-//should be updateFromSingleEnumField
 exports.updateFromSingleEnumField = catchAsync(async (req,res,next) => {
     console.log(req.body)
     const data = await Product.updateMany({[req.body.fieldName]: req.body.oldInfo}, {[req.body.fieldName]: req.body.newInfo}, {runValidators: true} )
@@ -59,21 +57,19 @@ exports.updateFromArrayEnumField = catchAsync(async (req, res, next) => {
 });
 
 exports.getProduct = functions.getOne(Product);
-// exports.updateProduct = functions.updateOne(Product);
 exports.updateProduct = catchAsync(async (req,res,next) => {
-        const doc = await Product.findByIdAndUpdate(req.params.id, req.fields, {//temporal, revisar este req.fields para ver a futuro el tema del borrado de imagenes que son borradas
-            new: true,
-            runValidators: true,
-        });
-        //404 errors
-        if(!doc) {
-            next(new AppError('No document found with this Id', 404));
-        }
+    req.fields.colors = JSON.parse(req.fields.colors);
+    const doc = await Product.findByIdAndUpdate(req.params.id, req.fields, {//temporal, revisar este req.fields para ver a futuro el tema del borrado de imagenes que son borradas
+        new: true,
+        runValidators: true,
+    });
+    //404 errors
+    if(!doc) next(new AppError('No document found with this Id', 404));
 
-        res.status(200).json({
-            status: 'success',
-            data: doc
-        })
+    res.status(200).json({
+        status: 'success',
+        data: doc
+    })
 });
 exports.deleteProduct = functions.deleteOne(Product);
 

@@ -96,12 +96,12 @@ exports.updateOne = (Model) =>
 })
 
 //este es para devolver el modelo del documento
-exports.getJustOne = (Model) => 
-    catchAsync(async (req,res,next) => {
-        res.status(200).json({
-            status: 'success',
-            data: Model.schema.obj,
-        })
+exports.getJustOne = (Model) => catchAsync(async (req,res,next) => {
+    const {updatedAt, createdAt, ...rest} = Model.schema.obj
+    res.status(200).json({
+        status: 'success',
+        data: rest,
+    })
 })
 
 //esta funcion es especifica para un mejor funcionamiento del agregado de enums,
