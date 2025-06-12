@@ -204,7 +204,7 @@ exports.restrict = (...roles) => {
       }
       next();
     }
-  }  
+  }
 
 exports.getUserInfo = catchAsync(async (req,res,next) =>{
 
