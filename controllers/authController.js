@@ -53,10 +53,10 @@ exports.signup = catchAsync(async (req,res,next) => {
     createSendToken(newUser, 201, req, res);//esto siempre al final por el res.status de la funcion
 })
 exports.createUser = catchAsync(async (req,res,next) => {
-    const newUser = await User.create({
+    const newUser = new User({
         username: req.body.username,
         mail: req.body.mail,
-        role: req.body.role || 'user',        
+        role: req.body.role || 'user',
     })
     const resetToken = newUser.createPasswordResetToken();
     await newUser.save({validateBeforeSave: false});

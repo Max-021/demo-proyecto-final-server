@@ -45,11 +45,11 @@ const userSchema = new mongoose.Schema({
     },
     lastLoginIp:{
         type: String,
-        validate: {
-            validator: (ip) => validator.isIP(ip),
-            message: props => `${props.value} is not a valid Ip address`
-        },
         default: null,
+        validate: {
+            validator: (ip) => ip === null || validator.isIP(ip),
+            message: props => `${props.value} is not a valid Ip address.`
+        },
     },
     status: {
         type: String,
