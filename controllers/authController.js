@@ -137,6 +137,11 @@ exports.login = catchAsync(async (req,res,next) => {
         console.log(user)
         return next(new AppError('Incorrect email or password.',401));
     }
+    if(user.status === 'suspended') return next(new AppError(`This account is suspended. You can't login while in this condition.`, 403));
+    if(user.status === 'inactive') {
+        user.status = 'active';
+        await new Email(user, '').userActivation();
+    }
 
     user.lastLogin = Date.now();
     user.lastLoginIp = req.ip;

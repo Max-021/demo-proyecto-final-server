@@ -26,6 +26,7 @@ exports.userDeactivated = () => /*html*/`
     <h2>Cuenta desactivada</h2>
     <p>Este mensaje fue enviado para confirmarle la desactivación de su cuenta. La misma no podra realizar ninguna acción hasta ser reactivada 
     por el propietario de la cuenta.</p>
+    <p>Para reactivar la cuenta simplemente se necesita iniciar sesión normalmente.</p>
 `;
 exports.reactivatedUser = () => /*html*/`
     <h2>Cuenta reactivada</h2>
