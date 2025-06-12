@@ -57,7 +57,7 @@ module.exports = class Email {
         // console.log(mailOptions)
         const transporter = await this.newTransport();
         const info = await transporter.sendMail(mailOptions);
-   
+
         if(process.env.NODE_ENV !== 'production'){
             console.log("mensaje enviado:"+info.messageId);
             console.log("vprev"+nodemailer.getTestMessageUrl(info));

@@ -244,9 +244,14 @@ exports.passwordForgotten = catchAsync(async (req, res, next) => {
 
         return next(new AppError('An error ocurred sending the email, please try again in a few minutes.', 500));
     }
+
+    console.log(resetUrl)
     res.status(202).json({
         status: 'success',
-        message: 'Token sent via email',
+        data: {
+            message: 'Token sent via email',
+            ...(process.env.NODE_ENV !== 'production' && {resetUrl}),
+        }
     });
 })
 exports.resetPassword = catchAsync(async (req,res,next) => {
@@ -268,7 +273,6 @@ exports.resetPassword = catchAsync(async (req,res,next) => {
     createSendToken(user, 200, req, res);
 })
 exports.validateResetToken = catchAsync(async (req,res,next) => {
-    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS")
     const hashedToken = crypto.createHash("sha256").update(req.params.token).digest('hex');
     
     const user = await User.findOne({passwordResetToken: hashedToken, passwordResetExpires: { $gt: Date.now()}});

@@ -29,6 +29,14 @@ Las funciones principales del controlador de autenticacion son las de proteger y
 Esto es para que no sea un problema a la hora de los request del lado cliente para mostrar las opciones disponibles antes de mandar el documento a crear en la base de datos
 
 
+##En controladores
+
+todas las respuestas deben seguir el formato:
+res.status(num).json({
+    status: 'status',
+    data: {lo que quiera devolver, pero como objeto }
+});
+
 ##En el authController
 
 La funcion createSendToken tiene que contener los campos necesarios adaptandose a los requerimientos del modelo de usuario
@@ -38,3 +46,7 @@ Las funciones signUp, LogOut, logIn tienen que ser revisadas por si hay que hace
 ###Mail
 
 Los mails tienen varios tipos según el caso, particularmente para crear un usuario, hay dos metodos Welcome y WelcomeSignup con el primero siendo el mail que se envía cuando un administrador crea un usuario y el segundo para cuando un usuario crea su cuenta desde /signup en el cliente, con esta segunda opción estando inhabilitada por defecto. También se incluyen mails destinados a informar acciones realizadas tanto por el usuario como por el administrador.
+
+###Sobre los roles
+
+La idea es que haya 1 solo administrador, o la cantidad mínima posible de usuarios con el máximo status, éste no se puede modificar y no se pueden tomar acciones entre sí. sí pueden tener poder de cambio de rol/suspensión + otras acciones que se consideren pertinentes sobre el resto de los usuarios.

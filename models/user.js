@@ -76,7 +76,9 @@ userSchema.pre(/^find/, function (next){
     next();
 })
 userSchema.statics.getAllowedRoles = function() {
-    return this.schema.path('role').enumValues;
+    const rolesList = this.schema.path('role').enumValues;
+    const filteredRoles = rolesList.filter(role => role !== 'admin');
+    return filteredRoles;
 };  
 
 userSchema.methods.correctPassword = async function(candidatePassword,userPassword){
