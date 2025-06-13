@@ -5,6 +5,7 @@ const User = require('../models/user');
 const catchAsync = require('../auxiliaries/catchAsync');
 const AppError = require('../auxiliaries/appError');
 const Email = require('../auxiliaries/mail');
+const { userInfo } = require('os');
 
 const signToken = (id) => jwt.sign({id}, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN, })
 
@@ -81,63 +82,63 @@ exports.createUser = catchAsync(async (req,res,next) => {
 })
 
 exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta funcion
-    if(req.cookies.jwt){
-        try{
-            const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
-            const freshUser = await User.findById(decoded.id);
-
-            if(!freshUser){
-                console.log('fresh user not')
-                return next(new AppError("The user belonging to this token no longer exists.", 401));
-            }
-            if(await freshUser.changedPasswordAfter(decoded.iat)){
-                console.log('changed password')
-                return next(new AppError("Password changed recently, please log in again.", 401));
-            }
-            //temporal, agregar algo que tenga un tiempo de expiracion a la cookie
-            res.locals.user = freshUser;
-            // return next();
-            res.status((200)).json({
-                status: 'success',
-                data: {
-                    message:'logged',
-                    userInfo: {role: freshUser.role, username: freshUser.username}
-                },
-            })
-        }catch(error){
-            res.status(200).json({
-                status: 'success',
-                data: {    
-                    message: 'No user logged in',
-                    userInfo: {role: '', username: ''},
-                },
-            })
-            // return next(new AppError('No user logged in',404));
-        }
-    }else{
-        res.status(200).json({
+    if(!(req.cookies.jwt)){
+        return res.status(200).json({
             status: 'success',
             data: {
                 message: 'No user logged in',
-                userInfo: {role: 'none', username: ''}
+                userInfo: {role: 'none', username: '', id: ''},
             },
         })
-        // return next(new AppError(`Couldn't determine user status`,404));
+    }
+    try{
+        const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
+        const freshUser = await User.findById(decoded.id);
+        const cookieOps = {httpOnly: true, secure: true, sameSite: 'none'};
+
+        if(!freshUser){
+            console.log('fresh user not')
+            res.clearCookie('jwt', cookieOps);
+            return next(new AppError("The user belonging to this token no longer exists.", 401));
+        }
+        if(await freshUser.changedPasswordAfter(decoded.iat)){
+            console.log('changed password')
+            res.clearCookie('jwt', cookieOps);
+            return next(new AppError("Password changed recently, please log in again.", 401));
+        }
+        if(freshUser.status === 'inactive' || freshUser.status === 'suspended') {
+            res.clearCookie('jwt', cookieOps);
+            return res.status(200).json({status: 'success', data: { message: 'logged out', userInfo: {role: '', username: '', id: ''}}});
+        }
+        return res.status((200)).json({
+            status: 'success',
+            data: {
+                message:'logged',
+                userInfo: {role: freshUser.role, username: freshUser.username, id: freshUser.id}
+            },
+        })
+    }catch(error){
+        return res.status(200).json({
+            status: 'success',
+            data: {    
+                message: 'No user logged in',
+                userInfo: {role: '', username: '', id: ''},
+            },
+        })
     }
 }
 
 exports.login = catchAsync(async (req,res,next) => {
     const {mail,password} = req.body;
 
-    if(!mail || !password) {
-        return next(new AppError('Please provide email and/or password.',400));
-    }
+    if(!mail || !password) return next(new AppError('Please provide email and/or password.',400));
+
     const user = await User.findOne({mail}).select("+password");
-    if(!user || !(await user.correctPassword(password, user.password))){
-        console.log(user)
-        return next(new AppError('Incorrect email or password.',401));
-    }
+    
+    if(!user || !(await user.correctPassword(password, user.password))) return next(new AppError('Incorrect email or password.',401));
+
     if(user.status === 'suspended') return next(new AppError(`This account is suspended. You can't login while in this condition.`, 403));
+    
     if(user.status === 'inactive') {
         user.status = 'active';
         await new Email(user, '').userActivation();
@@ -154,7 +155,7 @@ exports.login = catchAsync(async (req,res,next) => {
 exports.logout = catchAsync(async (req,res) => {
     res.cookie('jwt','logged out', {
         expires: new Date(Date.now() + 10 * 1000),
-        httpOnly: true,//temporal, revisar este atributo si va y porque ponerlo
+        httpOnly: true,
     })
     res.status(200).json({
         status: 'Logged out',
@@ -174,18 +175,14 @@ exports.protect = catchAsync(async (req, res, next) => {
         token = req.cookies.jwt;
     }
 
-    if(!token){
-        return next(new AppError('To perform this action you must have logged in.', 401));
-    }
+    if(!token) return next(new AppError('To perform this action you must have logged in.', 401));
 
     //verifico el token
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
     const freshUser = await User.findById(decoded.id)
 
-    if(!freshUser){
-        return next(new AppError("The user does not exist.",401));
-    }
+    if(!freshUser) return next(new AppError("The user does not exist.",401));
 
     //temporal, funcion comentada porque se supone que no funciona como deberia, corregir, también reveer pertinencia de dar este tipo de informacion
     // if(freshUser.changedPasswordAfter(decoded.iat)){
@@ -317,4 +314,9 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     user.passwordChangedAt = Date.now();
     await user.save();
     return createSendToken(user, 200, req, res);
+})
+
+exports.restrictToSelf = catchAsync(async (req,res,next) => {
+    if(req.user.id !== req.params.id) return next(new AppError(`You don't have permission to perform this action`, 403));
+    next();
 })

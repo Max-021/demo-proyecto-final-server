@@ -88,4 +88,7 @@ module.exports = class Email {
     async updatedRole(){
         await this.send('Rol actualizado', userMail.userRoleUpdated(this.role));//ver si le cambio el subject a algo más adecuado como cargo, posicion, lo que sea
     }
+    async deleteAccount(){
+        await this.send('Cuenta eliminada', userMail.userDeleted());
+    }
 }

@@ -71,10 +71,10 @@ userSchema.pre('save',async function (next) {
     next();
 })
 
-userSchema.pre(/^find/, function (next){
-    this.find({status: {$ne: 'inactive'}})
-    next();
-})
+// userSchema.pre(/^find/, function (next){//lo dejo comentado porque manejo esto en el login devolviendo bien los errores
+//     this.find({status: {$ne: 'suspended'}})
+//     next();
+// })
 userSchema.statics.getAllowedRoles = function() {
     const rolesList = this.schema.path('role').enumValues;
     const filteredRoles = rolesList.filter(role => role !== 'admin');

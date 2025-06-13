@@ -7,7 +7,6 @@ const Email = require('../auxiliaries/mail');
 
 exports.user = functions.getOne(User);
 exports.updateUser = functions.updateOne(User)
-exports.deleteUser = functions.deleteOne(User)
 exports.getUsers = catchAsync(async (req,res,next) => {
     const fieldsRequired = 'username mail role status'//getUserInfo en authController tiene una lista parecida, revisar
     const info = await User.find().select(fieldsRequired).lean();
@@ -16,10 +15,32 @@ exports.getUsers = catchAsync(async (req,res,next) => {
         data: info,
     })
 })
+exports.deleteUser = catchAsync(async (req,res,next) => {
+    const user = await User.findByIdAndDelete(req.params.id);
+    //404 errors
+    if(!user) return next(new AppError('No document found with this Id', 404));
+
+    await new Email(user, '').deleteAccount();
+    res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+    })
+    res.status(204).json({
+        status: 'success',
+        data: null,
+    })
+
+})
 
 exports.deactivateMe = catchAsync(async (req,res,next) => {
     const user = await User.findByIdAndUpdate(req.params.id, {status: 'inactive'});
     await new Email(user, '').userDeactivation();
+    res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+    })
     res.status(204).json({
         status: 'success',
         data: null,

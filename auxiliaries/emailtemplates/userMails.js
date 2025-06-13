@@ -22,6 +22,10 @@ exports.passwordRetrieved = (url) => /*html*/`
     <p>Se ha reestablecido la contraseña para este usuario, haz click en el siguiente link ${url} para ingresar su nueva contraseña. En
      el caso de no haber solicitado este link ignore este mensaje.</p>
 `;
+exports.userDeleted = () => /*html*/`
+    <h2>Cuenta eliminada</h2>
+    <p>Este mensaje fue enviado para confirmarle la eliminación de su cuenta. Los datos fueron borrados y en caso de querer volver a participar en la plataforma tendrá que ser desde una cuenta nueva.</p>
+`;
 exports.userDeactivated = () => /*html*/`
     <h2>Cuenta desactivada</h2>
     <p>Este mensaje fue enviado para confirmarle la desactivación de su cuenta. La misma no podra realizar ninguna acción hasta ser reactivada 
