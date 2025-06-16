@@ -25,7 +25,8 @@ exports.createProduct = catchAsync(async (req,res,next) => {
 });
 exports.updateFromSingleEnumField = catchAsync(async (req,res,next) => {
     console.log(req.body)
-    const data = await Product.updateMany({[req.body.fieldName]: req.body.oldInfo}, {[req.body.fieldName]: req.body.newInfo}, {runValidators: true} )
+    const data = await Product.updateMany({[req.body.fieldName]: req.body.oldInfo}, {[req.body.fieldName]: req.body.newInfo}, {runValidators: false} )
+    // const data = await Product.updateMany({[req.body.fieldName]: req.body.oldInfo}, {[req.body.fieldName]: req.body.newInfo}, {runValidators: true} )//temporal, revisar la importancia de que esto esté en true
     res.status(200).json({
         status: 'success',
         data,//temporal, revisar si sacar estas cosas
@@ -33,21 +34,39 @@ exports.updateFromSingleEnumField = catchAsync(async (req,res,next) => {
 })
 exports.updateFromArrayEnumField = catchAsync(async (req, res, next) => {
     console.log(req.body);
+    let data = {};
 
-    const data = await Product.updateMany(
-        { [req.body.fieldName]: req.body.oldInfo }, // Buscar solo productos que contenían el color viejo
-        [{
-            $set: {
-                [req.body.fieldName]: {
-                    $map: {
-                        input: `$${req.body.fieldName}`,
-                        as: "color",
-                        in: { $cond: { if: { $eq: ["$$color", req.body.oldInfo] }, then: req.body.newInfo, else: "$$color" } }
+    if(req.body.newInfo !== ''){
+        data = await Product.updateMany(
+            { [req.body.fieldName]: req.body.oldInfo }, // Buscar solo productos que contenían el color viejo
+            [{
+                $set: {
+                    [req.body.fieldName]: {
+                        $map: {
+                            input: `$${req.body.fieldName}`,
+                            as: "color",
+                            in: { $cond: { if: { $eq: ["$$color", req.body.oldInfo] }, then: req.body.newInfo, else: "$$color" } }
+                        }
                     }
                 }
-            }
-        }]
-    );
+            }]
+        );
+    }else{
+        data = await Product.updateMany(
+            { [req.body.fieldName]: req.body.oldInfo, },
+            [{
+                $set: {
+                    [req.body.fieldName]: {
+                        $filter: {
+                            input: `$${req.body.fieldName}`,
+                            as: 'el',
+                            cond: { $ne: ["$$el", req.body.oldInfo] },
+                        }
+                    }
+                }
+            }]
+        );
+    }
     console.log(data)
 
     res.status(200).json({
