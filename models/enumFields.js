@@ -1,16 +1,17 @@
 const mongoose = require('mongoose');
 
 const enumFieldsSchema = new mongoose.Schema({
-    category: {
-        type: [String],
+    name: {
+        type: String,
         trim: true,
-        required: [true,'A category must have a name'],
+        required: [true, 'A name is required for this record.'],
+        unique: true,
     },
-    colors: {
+    values: {
         type: [String],
         trim: true,
-        required: [true,'A color must have a name']
-    }
+        default: [],
+    },
 })
 
 const EnumFields = mongoose.model('EnumFields', enumFieldsSchema);
