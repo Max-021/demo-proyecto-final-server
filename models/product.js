@@ -17,8 +17,11 @@ const productSchema = new mongoose.Schema({
         type: String,
         // enum: {values: [categories], message: '{VALUE} is not supported'},
         required: [true, 'A product must have a category'],
-        validate: async (v) => {
-            return validationFunctions(v,'category')
+        validate: {
+            message: props => `${props.value} no es una categoria permitida`,
+            validator: async (v) => {
+                return validationFunctions(v,'category')
+            }
         },
     },
     price: {
@@ -33,8 +36,11 @@ const productSchema = new mongoose.Schema({
     },
     colors: {
         type: [String],
-        validate: async (v) => {
-            return validationFunctions(v, 'colors')
+        validate: {
+            message: props => `${props.value} no es un color válido`,
+            validator: async (v) => {
+                return validationFunctions(v, 'colors')
+            }
         },
     },
     img:{

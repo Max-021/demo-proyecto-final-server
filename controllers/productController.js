@@ -78,16 +78,22 @@ exports.updateFromArrayEnumField = catchAsync(async (req, res, next) => {
 exports.getProduct = functions.getOne(Product);
 exports.updateProduct = catchAsync(async (req,res,next) => {
     req.fields.colors = JSON.parse(req.fields.colors);
-    const doc = await Product.findByIdAndUpdate(req.params.id, req.fields, {//temporal, revisar este req.fields para ver a futuro el tema del borrado de imagenes que son borradas
-        new: true,
-        runValidators: true,
+
+    const product = await Product.findById(req.params.id);
+    if(!product) return next(new AppError('No document found with this Id', 404));
+
+    Object.keys(req.fields).forEach(key => {
+        if (key !== 'img') product[key] = req.fields[key];
     });
-    //404 errors
-    if(!doc) next(new AppError('No document found with this Id', 404));
+
+    if(Array.isArray(req.fields.img)){
+        product.img = req.fields.img;
+    }
+    await product.save();
 
     res.status(200).json({
         status: 'success',
-        data: doc
+        data: product,
     })
 });
 exports.deleteProduct = functions.deleteOne(Product);

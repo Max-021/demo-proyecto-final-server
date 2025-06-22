@@ -16,7 +16,7 @@ router.route('/').post(
     authController.protect,
     authController.restrict(...editingRoles),
     formidableMiddleware({multiples: true}),
-    imgFunctions.uploadImgs,
+    imgFunctions.uploadImages,
     productController.createProduct,
 );
 router.route('/one').get(authController.protect, productController.getOnlyOne);
@@ -41,7 +41,8 @@ router
         authController.protect,
         authController.restrict(...editingRoles),
         formidableMiddleware({multiples: true}),
-        imgFunctions.uploadImgs,
+        imgFunctions.deleteImages,
+        imgFunctions.uploadImages,
         productController.updateProduct,
     )
     .delete(
