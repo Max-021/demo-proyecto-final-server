@@ -20,13 +20,13 @@ exports.createOne = (Model) =>
         });
 });
 
-//revisar, temporal
 exports.getAll = (Model) =>
     catchAsync(async (req,res,next) => {
 
         //para permitir rutas anidadas, temporal REVISAR
         let filter = {}
         if(req.params.id) filter = {item: req.params.id};
+
         //ejecutar query, temporal REVISAR
         const features = new ApiFeat(Model.find(filter), req.query)
             .filter()

@@ -1,6 +1,8 @@
 //Esta es mi plantilla de productos puede mutar en tamaño y forma dependiendo de la necesidad
 const mongoose = require('mongoose');
 
+const productStatusEnum = ['normal',];//acá agregar otros estados segun se determine
+
 const validationFunctions = require('../auxiliaries/validationFunctions');
 
 const productSchema = new mongoose.Schema({
@@ -45,16 +47,35 @@ const productSchema = new mongoose.Schema({
     },
     img:{
         type: [String],
-        default: 'test.jpg',//agregar una validacion para que todos los campos de texto de acá verifiquen que la extension corresponda a una imagen, temporal
+        default: ['test.jpg'],
         required: true,
-    }
+    },
+    isActive: {
+        type: Boolean,
+        default: true,
+    },
+    status: {
+        type: String,
+        enum: productStatusEnum,
+        default: 'normal',
+        required: [true, 'A product must have a status'],
+    },
 }, {timestamps: true});
 
-const Product = mongoose.model('Product',productSchema);
+
+productSchema.query.status = function(prodStatus) {
+    return this.where({status: prodStatus});
+}
+
+productSchema.query.neStatus = function(prodStatus) {
+    return this.where({status: {$ne: prodStatus}});
+}
 
 // productSchema.pre('save',function (next) {
-//     //aca podria agregar algo mas adelante para que se ejecute previo al guardado
-//     next();
+    //     //aca podria agregar algo mas adelante para que se ejecute previo al guardado
+    //     next();
 // })
 
+const Product = mongoose.model('Product',productSchema);
+    
 module.exports = Product;

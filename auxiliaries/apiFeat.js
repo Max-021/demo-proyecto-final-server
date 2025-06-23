@@ -1,4 +1,4 @@
-class APIFeatures {
+class ApiFeat {
     constructor(query, queryString) {
         this.query = query;
         this.queryString = queryString
@@ -10,7 +10,7 @@ class APIFeatures {
         excludedFields.forEach((el) => delete queryObj[el]);
 
         let queryStr = JSON.stringify(queryObj);
-        queryStr = queryStr.replace(/\b(gte|gt|lt|lte)\b/g, (match) => `${match}`);
+        queryStr = queryStr.replace(/\b(gte|gt|lt|lte)\b/g, (match) => `$${match}`);
 
         this.query = this.query.find(JSON.parse(queryStr));
         return this;
@@ -44,4 +44,4 @@ class APIFeatures {
     }
 }
 
-module.exports = APIFeatures;
+module.exports = ApiFeat;

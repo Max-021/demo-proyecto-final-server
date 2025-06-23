@@ -4,7 +4,24 @@ const functions = require('./factoryHandler');
 const catchAsync = require('../auxiliaries/catchAsync');
 const AppError = require('../auxiliaries/appError');
 
-exports.catalogo = functions.getAll(Product);
+exports.catalogo = catchAsync(async (req,res,next) => {
+    const reqStatus = req.query.prodStatus;
+    const activeCond = req.query.activeCond;
+    const statusEnum = Product.schema.path('status').enumValues;
+
+    if(reqStatus !== undefined && reqStatus !== '' && !statusEnum.includes(reqStatus)) return next(new AppError('Status set for products invalid', 400));
+
+    let filter = {};
+    if(reqStatus !== '' && reqStatus !== undefined) filter = {...filter, status: reqStatus}
+    if(activeCond !== undefined) filter = {...filter, isActive: activeCond === 'true'}
+
+    const catalogo = await Product.find(filter);
+    
+    res.status(200).json({
+        status: 'success',
+        data: catalogo
+    })
+});
 
 //REVISAR, temporal tambien verlo en factory handler
 //revisar que cuando se creen no se creen duplicados de los ya existentes, ver si lo puedo dejar como una validacion opcional
@@ -17,6 +34,7 @@ exports.createProduct = catchAsync(async (req,res,next) => {
         quantity: req.fields.quantity,
         colors: JSON.parse(req.fields.colors),
         img: req.fields.img,
+        isActive: req.fields.isActive,
     });
     res.status(201).json({
         status:'success',
@@ -98,4 +116,10 @@ exports.updateProduct = catchAsync(async (req,res,next) => {
 });
 exports.deleteProduct = functions.deleteOne(Product);
 
-exports.getOnlyOne = functions.getJustOne(Product);//esto es para obtener el modelo del producto en este caso
+exports.getOnlyOne = catchAsync(async (req,res,next) => {//para obtener el modelo del producto
+    const {created_at, updated_at, _id, __v, status, ...rest} = Product.schema.obj
+    res.status(200).json({
+        status: 'success',
+        data: rest,
+    })
+})

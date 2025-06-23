@@ -79,7 +79,7 @@ userSchema.statics.getAllowedRoles = function() {
     const rolesList = this.schema.path('role').enumValues;
     const filteredRoles = rolesList.filter(role => role !== 'admin');
     return filteredRoles;
-};  
+};
 
 userSchema.methods.correctPassword = async function(candidatePassword,userPassword){
     return await bcrypt.compare(candidatePassword,userPassword)
