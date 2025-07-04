@@ -5,6 +5,24 @@ const productStatusEnum = ['normal',];//acá agregar otros estados segun se dete
 
 const validationFunctions = require('../auxiliaries/validationFunctions');
 
+const stockSchema = new mongoose.Schema({
+    quantity: {
+        type: Number,
+        default: 0,
+        min: [0, `Quantity can't be negative`]
+    },
+    color: {
+        type: String,
+        required: [true, 'Color is required'],
+        validate: {
+            message: props => `${props.value} no es un color válido`,
+            validator: async (v) => {
+                return validationFunctions(v, 'colors')
+            }
+        },
+    },
+},{_id: false});
+
 const productSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -17,7 +35,6 @@ const productSchema = new mongoose.Schema({
     },
     category: {
         type: String,
-        // enum: {values: [categories], message: '{VALUE} is not supported'},
         required: [true, 'A product must have a category'],
         validate: {
             message: props => `${props.value} no es una categoria permitida`,
@@ -31,19 +48,9 @@ const productSchema = new mongoose.Schema({
         default: 0,
         min: [0, `Price can't be negative`]
     },
-    quantity: {
-        type: Number,
-        default: 0,
-        min: [0, `Quantity can't be negative`]
-    },
-    colors: {
-        type: [String],
-        validate: {
-            message: props => `${props.value} no es un color válido`,
-            validator: async (v) => {
-                return validationFunctions(v, 'colors')
-            }
-        },
+    stock: {
+        type: [stockSchema],
+        default: [],
     },
     img:{
         type: [String],
@@ -69,6 +76,15 @@ productSchema.query.status = function(prodStatus) {
 
 productSchema.query.neStatus = function(prodStatus) {
     return this.where({status: {$ne: prodStatus}});
+}
+productSchema.methods.adjustStock = async function(color, delta) {
+    const item = this.stock.find(s => s.color === color);
+    if(item){
+        item.quantity = Math.max(0, item.quantity + delta);
+    }else if(delta >= 0){
+        this.stock.push({color, quantity: delta});
+    }
+    return this.save();
 }
 
 // productSchema.pre('save',function (next) {

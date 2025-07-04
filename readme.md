@@ -17,6 +17,53 @@ Especial importancia al controlador de autenticación, revisar las anotaciones s
 
 También revisar especialmente el factoryHandler antes de cada implementación por posibles modificaciones/correcciones/adiciones de funciones
 
+##IMPORTANTE: sobre la funcion updateMany para la funcion updateFromStockEnumField, acá detallo como funciona el pipeline por si lo tengo que modificar
+updateMany(filter, udpate, options, callback function), me centro en el parametro update:
+    -Recibe normalmente un objeto con el valor a poner y las condiciones del reemplazo
+    -Pero si le mando un array se transforma en un pipeline de agregación que detallo acá en casos de futuras modificaciones:
+    pipeline = pipeline = [
+    // primera etapa: Añado un campo temporal basado en una condición
+    {
+        $set: {
+            campoTemporal: {
+                $cond: [
+                    { $gt || $lt || la condición que sea: ["$campo", valor] },  // 👈 1) operador lógico con referencias a campos mediante "$"
+                    valorTrue,   // 👈 2) valor si la condición es verdadera
+                    valorFalse   // 👈 3) valor si es falsa
+                ]
+            }
+        }
+    },
+
+    // segunda etapa: Actualizo aplicando el cambio usando operadores matemáticos
+    {
+        $set: {
+            campoFinal: {
+                $round || $abs || otro operador numérico: [  // 👈 operador de agregación, no se escriben varios a la vez
+                    {
+                        $multiply: [                        // 👈 ejemplo de operador interno
+                            "$campo",                       // 👈 campo original
+                            {
+                                $subtract || $divide || $add || $…: [  // 👈 operación aritmética sobre valores
+                                    valor,
+                                    "$campoTemporal"
+                                ]
+                            }
+                        ]
+                    },
+                    2  // 👈 precisión del redondeo (opcional según operador)
+                ]
+            }
+        }
+    },
+
+    // tercera etapa: Elimino el campo temporal
+    {
+        $unset || otro operador de base de datos: [ "campoTemporal" ]  // 👈 normalmente solo usás $unset acá
+    }
+]
+
+
 #Rutas
 
 Revisar las rutas correspondientes a cada modelo para que se adapten al uso requerido
@@ -28,9 +75,7 @@ Las funciones principales del controlador de autenticacion son las de proteger y
 
 Esto es para que no sea un problema a la hora de los request del lado cliente para mostrar las opciones disponibles antes de mandar el documento a crear en la base de datos
 
-
 ##En controladores
-
 todas las respuestas deben seguir el formato:
 res.status(num).json({
     status: 'status',

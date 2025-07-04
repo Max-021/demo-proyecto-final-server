@@ -23,18 +23,28 @@ exports.catalogo = catchAsync(async (req,res,next) => {
     })
 });
 
-//REVISAR, temporal tambien verlo en factory handler
-//revisar que cuando se creen no se creen duplicados de los ya existentes, ver si lo puedo dejar como una validacion opcional
+//revisar que cuando se creen no se creen duplicados de los ya existentes, ver si lo puedo dejar como una validacion opcional/ temporal
 exports.createProduct = catchAsync(async (req,res,next) => {
+    console.log(req.fields)
+    let newStock = [];
+    if(req.fields.stock){
+        try {
+            newStock = typeof req.fields.stock === 'string' ? JSON.parse(req.fields.stock) : req.fields.stock;
+        } catch (error) {
+            return next(new AppError('Stock format invalid',400));
+        }
+    }
+    const price = parseFloat(req.fields.price)
+    if(isNaN(price)) return next(new AppError('Price format invalid', 400));
     const doc = await Product.create({
         name: req.fields.name,
         descr: req.fields.descr,
         category: req.fields.category,
-        price: req.fields.price,
-        quantity: req.fields.quantity,
-        colors: JSON.parse(req.fields.colors),
+        price: price,
+        stock: newStock,
         img: req.fields.img,
-        isActive: req.fields.isActive,
+        // status: 'normal',//comentado temporalmente porque esta pensado para mejoras futuras
+        isActive: req.fields.isActive === 'true' || req.fields.isActive === true,
     });
     res.status(201).json({
         status:'success',
@@ -42,71 +52,160 @@ exports.createProduct = catchAsync(async (req,res,next) => {
     });
 });
 exports.updateFromSingleEnumField = catchAsync(async (req,res,next) => {
-    console.log(req.body)
-    const data = await Product.updateMany({[req.body.fieldName]: req.body.oldInfo}, {[req.body.fieldName]: req.body.newInfo}, {runValidators: false} )
-    // const data = await Product.updateMany({[req.body.fieldName]: req.body.oldInfo}, {[req.body.fieldName]: req.body.newInfo}, {runValidators: true} )//temporal, revisar la importancia de que esto esté en true
+    if(!oldInfo)            return next(new AppError('Old value required', 400));
+    if(!newInfo)            return next(new AppError('New value required', 400));
+    if(oldInfo === newInfo) return next(new AppError('Old and new values are the same', 400));
+    if(!fieldName)          return next(new AppError('Field type required', 400));
+
+    const schemaType = Product.schema.path(fieldName);
+    if (!schemaType) return next(new AppError(`Field "${fieldName}" does not exist on Product`, 400));
+    const data = await Product.updateMany({[req.body.fieldName]: req.body.oldInfo}, {[req.body.fieldName]: req.body.newInfo}, {runValidators: true} )
     res.status(200).json({
         status: 'success',
-        data,//temporal, revisar si sacar estas cosas
+        data:{matched: data.matchedCount, modified: data.modifiedCount},
     })
 })
 exports.updateFromArrayEnumField = catchAsync(async (req, res, next) => {
     console.log(req.body);
-    let data = {};
+    const {newInfo, oldInfo, fieldName} = req.body;
 
-    if(req.body.newInfo !== ''){
-        data = await Product.updateMany(
-            { [req.body.fieldName]: req.body.oldInfo }, // Buscar solo productos que contenían el color viejo
-            [{
-                $set: {
-                    [req.body.fieldName]: {
-                        $map: {
-                            input: `$${req.body.fieldName}`,
-                            as: "color",
-                            in: { $cond: { if: { $eq: ["$$color", req.body.oldInfo] }, then: req.body.newInfo, else: "$$color" } }
-                        }
+    if(!oldInfo)            return next(new AppError('Old value required', 400));
+    if(!newInfo)            return next(new AppError('New value required', 400));
+    if(oldInfo === newInfo) return next(new AppError('Old and new values are the same', 400));
+    if(!fieldName)          return next(new AppError('Field type required', 400));
+
+    const schemaType = Product.schema.path(fieldName);
+    if (!schemaType) return next(new AppError(`Field "${fieldName}" does not exist on Product`, 400));
+    if(schemaType.instance !== 'Array') return next(new AppError(`${fieldName} is not an array`, 400));
+
+    const data = await Product.updateMany(
+        { [fieldName]: oldInfo }, // Buscar solo productos que contenían el color viejo
+        [{
+            $set: {
+                [fieldName]: {
+                    $map: {
+                        input: `$${fieldName}`,
+                        as: "el",
+                        in: { $cond: [ { $eq: ["$$el", oldInfo] }, newInfo, "$$el" ] }
                     }
                 }
-            }]
-        );
-    }else{
-        data = await Product.updateMany(
-            { [req.body.fieldName]: req.body.oldInfo, },
-            [{
-                $set: {
-                    [req.body.fieldName]: {
-                        $filter: {
-                            input: `$${req.body.fieldName}`,
-                            as: 'el',
-                            cond: { $ne: ["$$el", req.body.oldInfo] },
-                        }
-                    }
-                }
-            }]
-        );
-    }
-    console.log(data)
+            }
+        }],
+        {runValidators: true},
+    );
 
     res.status(200).json({
         status: 'success',
-        data,
+        data: {matched: data.matchedCount, modified: data.modifiedCount},
     });
 });
 
+exports.updateFromStockEnumField = catchAsync(async (req,res,next) => {
+    const {newInfo, oldInfo, fieldName} = req.body;
+
+    if(!oldInfo)                            return next(new AppError('Old value required', 400));
+    if(!newInfo || newInfo==='')            return next(new AppError('New value required', 400));
+    if(oldInfo === newInfo)                 return next(new AppError('Old and new values are the same', 400));
+    if(!fieldName)                          return next(new AppError('Field type required', 400));
+    const schemaType = Product.schema.path(fieldName);
+    if (!schemaType)                        return next(new AppError(`Field "${fieldName}" does not exist on Product`, 400));
+    if(schemaType.instance !== 'Array')     return next(new AppError(`${fieldName} is not an array`, 400));
+    const sample = Product.schema.path(fieldName).caster.options;
+    if(!sample.color && !sample.quantity)   return next(new AppError('Error, mising subfields',400));
+
+    const pipeline = [//comento todo el funcionamiento del pipeline en readme.md
+        { $set: {
+            [fieldName]: {
+                $map: {
+                    input: `$${fieldName}`,
+                    as: "item",
+                    in: {
+                        $mergeObjects: [
+                            "$$item",
+                            { color: {
+                                $cond: [
+                                    {$eq: ["$$item.color", oldInfo]},
+                                    newInfo,
+                                    "$$item.color",
+                                ]
+                            }}
+                        ]
+                    }
+                }
+            }
+        }},
+        { $unwind: `$${fieldName}`},
+        { $group: {
+                _id:        {id: "$_id", color: `$${fieldName}.color`},
+                quantity:   {$sum: `$${fieldName}.quantity`},
+                doc:        {$first: "$$ROOT"},
+        }},
+        { $group: {
+            _id: "$_id.id",
+            stock: {
+                $push: {
+                    color: "$_id.color",
+                    quantity: "$quantity"
+                }
+            },
+            doc: {$first: "$doc"}
+        }},
+        { $replaceRoot: {
+            newRoot: {
+                $mergeObjects: ["$doc", { [fieldName]: "$stock" }],
+            }
+        }},
+    ]
+    const data = await Product.updateMany(
+        { [`${fieldName}.color`]: oldInfo },
+        pipeline,
+        {runValidators: true},
+    )
+
+    res.status(200).json({
+        status: 'success',
+        data: {matched: data.matchedCount, modified: data.modifiedCount},
+    })
+})
+
 exports.getProduct = functions.getOne(Product);
 exports.updateProduct = catchAsync(async (req,res,next) => {
-    req.fields.colors = JSON.parse(req.fields.colors);
-
+    let updatedStock = [];
+    if(req.fields.stock){
+        try {
+            updatedStock = typeof req.fields.stock === 'string' ? JSON.parse(req.fields.stock) : req.fields.stock;
+        } catch (error) {
+            return next(new AppError('Stock format invalid',400));
+        }
+    }
     const product = await Product.findById(req.params.id);
     if(!product) return next(new AppError('No document found with this Id', 404));
 
-    Object.keys(req.fields).forEach(key => {
-        if (key !== 'img') product[key] = req.fields[key];
-    });
-
-    if(Array.isArray(req.fields.img)){
-        product.img = req.fields.img;
+    if(Array.isArray(updatedStock)){
+        product.stock = updatedStock.map(item => ({
+            color: item.color,
+            quantity: item.quantity,
+        }))
     }
+    const excluded = ['img', 'stock', 'removedImages', 'imgOrder', 'newImages'];
+    Object.keys(req.fields).forEach( key => {
+        if(excluded.includes(key)) return;
+
+        const val = req.fields[key];
+
+        if(key === 'isActive'){
+            product.isActive = val === 'true' || val === true;
+        }else if(key === 'price'){
+            const p = parseFloat(val);
+            if(isNaN(p)) return next(new AppError('Price format invalid', 400));
+            product.price = p;
+        }else{
+            product[key] = val;
+        }
+    })
+
+    if(Array.isArray(req.fields.img)) product.img = req.fields.img;
+
     await product.save();
 
     res.status(200).json({
@@ -117,9 +216,54 @@ exports.updateProduct = catchAsync(async (req,res,next) => {
 exports.deleteProduct = functions.deleteOne(Product);
 
 exports.getOnlyOne = catchAsync(async (req,res,next) => {//para obtener el modelo del producto
-    const {created_at, updated_at, _id, __v, status, ...rest} = Product.schema.obj
+    const forbidden = ['__v', 'createdAt', 'updatedAt', 'status','_id', 'isActive'];
+    const modelDesc = {};
+
+    Product.schema.eachPath((path, schemaType) => {//para cuando es un array de subdocumentos
+        if(forbidden.includes(path) || path.includes('.')) return;
+
+        if(schemaType.instance === 'Array' && schemaType.caster && schemaType.caster.schema){
+            const subFields = {};
+            const subSchema = schemaType.caster.schema;
+
+            Object.entries(subSchema.paths).forEach(([subPath, subType]) => {
+                if(['_id', '__v'].includes(subPath)) return;
+                subFields[subPath] = {type: subType.instance};
+            })
+
+            modelDesc[path] = {
+                type:       'Array',
+                arrayType:  'Object',
+                subFields,
+                default:    schemaType.options.default || [],
+                required:   !!schemaType.isRequired,
+            };
+            return;
+        }
+
+        if(schemaType.instance === 'Array') {//para cuando es un array de primitivos
+            modelDesc[path] = {
+                type:       'Array',
+                arrayType:  schemaType.caster.instance,
+                default:    schemaType.options.default || [],
+                required:   !!schemaType.isRequired,
+            }
+            return;
+        }
+
+        //campos primitivos
+        modelDesc[path] = {
+            type:       schemaType.instance,
+            default:    schemaType.options.default,
+            required:   !!schemaType.isRequired,
+            enum:       schemaType.enumValues?.length ? schemaType.enumValues : undefined,
+            min:        schemaType.options.min,
+            max:        schemaType.options.max,
+        }
+    })
+
     res.status(200).json({
         status: 'success',
-        data: rest,
+        data: modelDesc,
     })
 })

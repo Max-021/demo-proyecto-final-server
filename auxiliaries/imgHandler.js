@@ -13,10 +13,15 @@ cloudinary.config({
 
 const IMG_WIDTH  = 750;  // por ejemplo
 const IMG_HEIGHT = 500;
-const DEFAULT_IMG = "https://res.cloudinary.com/your-cloudinary-name/image/upload/vdefault/default_image.webp";
+const DEFAULT_IMG = "https://res.cloudinary.com/dkjl60cwy/image/upload/v1740593162/products/tsauufqjnqjg3dveprym.webp";
 
 
 exports.uploadImages = catchAsync(async (req, res, next) => {
+  const rawNew = req.files?.newImages;
+  const newFiles = rawNew
+    ? (Array.isArray(rawNew) ? rawNew : [rawNew])
+    : [];
+
   let imgOrder = [];
   if (req.fields.imgOrder) {
     try {
@@ -26,10 +31,9 @@ exports.uploadImages = catchAsync(async (req, res, next) => {
     }
   }
 
-  const rawNew = req.files.newImages;
-  const newFiles = rawNew
-    ? (Array.isArray(rawNew) ? rawNew : [rawNew])
-    : [];
+  const keysToProcess = imgOrder.length
+    ? imgOrder
+    : newFiles.map(f => f.name);
 
   const newFilesMap = newFiles.reduce((map, file) => {
     map[file.name] = file;
@@ -37,20 +41,22 @@ exports.uploadImages = catchAsync(async (req, res, next) => {
   }, {});
 
   const finalUrls = [];
-  for (const key of imgOrder) {
+  for (const key of keysToProcess) {
     if (typeof key === 'string' && key.startsWith('http')) {
       finalUrls.push(key);
-    } else if (newFilesMap[key]) {
-      const file = newFilesMap[key];
+    }
+    else if (newFilesMap[key]) {
+      const file     = newFilesMap[key];
       const inputPath = file.path || file.filepath;
-      const buffer = await sharp(inputPath)
+      const buffer   = await sharp(inputPath)
         .resize(IMG_WIDTH, IMG_HEIGHT)
         .toFormat('webp')
         .toBuffer();
-      const url = await new Promise((res, rej) => {
+
+      const url = await new Promise((resolve, reject) => {
         cloudinary.uploader
           .upload_stream({ folder: 'products' }, (err, result) =>
-            err ? rej(err) : res(result.secure_url)
+            err ? reject(err) : resolve(result.secure_url)
           )
           .end(buffer);
       });
@@ -58,14 +64,11 @@ exports.uploadImages = catchAsync(async (req, res, next) => {
     }
   }
 
-  if (finalUrls.length === 0) {
-    req.fields.img = [DEFAULT_IMG];
-  } else {
-    req.fields.img = finalUrls;
-  }
+  req.fields.img = finalUrls.length ? finalUrls : [DEFAULT_IMG];
 
   next();
 });
+
 
 exports.deleteImages = catchAsync(async (req, res, next) => {
   // 0) Log para depurar qué llega

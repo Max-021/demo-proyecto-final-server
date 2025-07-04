@@ -10,45 +10,21 @@ const {editingRoles} = require('../data/roles');
 const router = express.Router();
 
 //routes
-router.route('/').get(productController.catalogo);
+router.route('/').get(productController.catalogo);//MEJORAR ESTO!!!!!!! acomodar el tema de protect y restrict
+router.get('/existing/:id', productController.getProduct);
 
-router.route('/').post(
-    authController.protect,
-    authController.restrict(...editingRoles),
-    formidableMiddleware({multiples: true}),
-    imgFunctions.uploadImages,
-    productController.createProduct,
-);
-router.route('/one').get(authController.protect, productController.getOnlyOne);
-router
-    .route('/changedSimpleField')
-    .patch(
-        authController.protect,
-        authController.restrict(...editingRoles),
-        productController.updateFromSingleEnumField,
-    );
-router
-    .route('/changedArrayField')
-    .patch(
-        authController.protect,
-        authController.restrict(...editingRoles),
-        productController.updateFromArrayEnumField,
-    )
-router
-    .route('/:id')
-    .get(productController.getProduct)
-    .patch(
-        authController.protect,
-        authController.restrict(...editingRoles),
-        formidableMiddleware({multiples: true}),
-        imgFunctions.deleteImages,
-        imgFunctions.uploadImages,
-        productController.updateProduct,
-    )
-    .delete(
-        authController.protect,
-        authController.restrict(...editingRoles),
-        productController.deleteProduct,//temporal, revisar si hacer algo especial por el tema de las imagenes
-);
+router.use(authController.protect);
+router.use(authController.restrict(...editingRoles));
+
+router.post('/', formidableMiddleware({multiples: true}), imgFunctions.uploadImages, productController.createProduct);
+router.get('/one', productController.getOnlyOne);
+
+router.patch('/changedSimpleField', productController.updateFromSingleEnumField);
+router.patch('/changedArrayField', productController.updateFromArrayEnumField);
+router.patch('/changedStockField', productController.updateFromStockEnumField);
+
+router.route('/existing/:id')
+    .patch(formidableMiddleware({multiples: true}), imgFunctions.deleteImages, imgFunctions.uploadImages, productController.updateProduct)
+    .delete(productController.deleteProduct);//temporal, revisar si hacer algo especial por el tema de las imagenes
 
 module.exports = router;
