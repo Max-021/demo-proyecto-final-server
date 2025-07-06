@@ -110,53 +110,35 @@ exports.updateFromStockEnumField = catchAsync(async (req,res,next) => {
     const schemaType = Product.schema.path(fieldName);
     if (!schemaType)                        return next(new AppError(`Field "${fieldName}" does not exist on Product`, 400));
     if(schemaType.instance !== 'Array')     return next(new AppError(`${fieldName} is not an array`, 400));
-    const sample = Product.schema.path(fieldName).caster.options;
-    if(!sample.color && !sample.quantity)   return next(new AppError('Error, mising subfields',400));
+    const subSchema = schemaType.schema;
+    if(!subSchema)                                                  return next(new AppError(`Field ${fieldName} is not a subdoc array`, 400));
+    if (!subSchema.path('color') || !subSchema.path('quantity'))    return next(new AppError("Subdoc must have color and quantity", 400));
 
-    const pipeline = [//comento todo el funcionamiento del pipeline en readme.md
+    const pipeline = [
         { $set: {
-            [fieldName]: {
-                $map: {
-                    input: `$${fieldName}`,
-                    as: "item",
-                    in: {
-                        $mergeObjects: [
-                            "$$item",
-                            { color: {
-                                $cond: [
-                                    {$eq: ["$$item.color", oldInfo]},
-                                    newInfo,
-                                    "$$item.color",
-                                ]
-                            }}
-                        ]
-                    }
-                }
-            }
-        }},
-        { $unwind: `$${fieldName}`},
-        { $group: {
-                _id:        {id: "$_id", color: `$${fieldName}.color`},
-                quantity:   {$sum: `$${fieldName}.quantity`},
-                doc:        {$first: "$$ROOT"},
-        }},
-        { $group: {
-            _id: "$_id.id",
             stock: {
-                $push: {
-                    color: "$_id.color",
-                    quantity: "$quantity"
+                $map: {
+                input: "$stock",
+                as: "item",
+                in: {
+                    $mergeObjects: [
+                    "$$item",
+                    { color: {
+                        $cond: [
+                            { $eq: ["$$item.color", oldInfo] }, // si el color coincide con oldInfo
+                            newInfo,                            // usar el nuevo color
+                            "$$item.color"                      // sino, conservar el color actual
+                        ]
+                    }}
+                    ]
                 }
-            },
-            doc: {$first: "$doc"}
-        }},
-        { $replaceRoot: {
-            newRoot: {
-                $mergeObjects: ["$doc", { [fieldName]: "$stock" }],
+                }
             }
-        }},
+            }
+        }
     ]
-    const data = await Product.updateMany(
+
+    const {matchedCount, modifiedCount } = await Product.updateMany(
         { [`${fieldName}.color`]: oldInfo },
         pipeline,
         {runValidators: true},
@@ -164,7 +146,7 @@ exports.updateFromStockEnumField = catchAsync(async (req,res,next) => {
 
     res.status(200).json({
         status: 'success',
-        data: {matched: data.matchedCount, modified: data.modifiedCount},
+        data: {matched: matchedCount, modified: modifiedCount},
     })
 })
 
