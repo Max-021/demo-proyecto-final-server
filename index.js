@@ -30,7 +30,9 @@ app.use(helmet());
 if(process.env.NODE_ENV === 'development') {
     app.use(morgan);
 }
-const limiter = rateLimit({max:100,windowsMs:60 * 60 * 1000,message: 'Too many tries from this ip, try again later'});
+
+const tryLimit = process.env.NODE_ENV === 'production' ? 10 : 100;
+const limiter = rateLimit({max:tryLimit,windowsMs:60 * 60 * 1000,message: 'Too many tries from this ip, try again later'});
 app.use('/api',limiter);
 
 app.use(express.json({limit: '10kb'}));
