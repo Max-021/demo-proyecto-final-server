@@ -130,6 +130,8 @@ exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta 
 
 exports.login = catchAsync(async (req,res,next) => {
     const {mail,password} = req.body;
+    mail.trim();
+    password.trim();
 
     if(!mail || !password) return next(new AppError('Please provide email and/or password.',400));
 
