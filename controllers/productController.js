@@ -52,6 +52,7 @@ exports.createProduct = catchAsync(async (req,res,next) => {
     });
 });
 exports.updateFromSingleEnumField = catchAsync(async (req,res,next) => {
+    const {newInfo, oldInfo, fieldName} = req.body;
     if(!oldInfo)            return next(new AppError('Old value required', 400));
     if(!newInfo)            return next(new AppError('New value required', 400));
     if(oldInfo === newInfo) return next(new AppError('Old and new values are the same', 400));
@@ -59,7 +60,7 @@ exports.updateFromSingleEnumField = catchAsync(async (req,res,next) => {
 
     const schemaType = Product.schema.path(fieldName);
     if (!schemaType) return next(new AppError(`Field "${fieldName}" does not exist on Product`, 400));
-    const data = await Product.updateMany({[req.body.fieldName]: req.body.oldInfo}, {[req.body.fieldName]: req.body.newInfo}, {runValidators: true} )
+    const data = await Product.updateMany({[fieldName]: oldInfo}, {[fieldName]: newInfo}, {runValidators: true} )
     res.status(200).json({
         status: 'success',
         data:{matched: data.matchedCount, modified: data.modifiedCount},
