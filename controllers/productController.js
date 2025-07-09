@@ -4,23 +4,20 @@ const functions = require('./factoryHandler');
 const catchAsync = require('../auxiliaries/catchAsync');
 const AppError = require('../auxiliaries/appError');
 
-exports.catalogo = catchAsync(async (req,res,next) => {
-    const reqStatus = req.query.prodStatus;
-    const activeCond = req.query.activeCond;
-    const statusEnum = Product.schema.path('status').enumValues;
+exports.catalogo = functions.getAll(Product);
+exports.checkCatalogue = catchAsync(async (req,res,next) => {
+    const { showInactive, showAll } = req.query;
+    delete req.query.showInactive;
+    delete req.query.showAll;
 
-    if(reqStatus !== undefined && reqStatus !== '' && !statusEnum.includes(reqStatus)) return next(new AppError('Status set for products invalid', 400));
+    if(showAll === 'true'){
 
-    let filter = {};
-    if(reqStatus !== '' && reqStatus !== undefined) filter = {...filter, status: reqStatus}
-    if(activeCond !== undefined) filter = {...filter, isActive: activeCond === 'true'}
-
-    const catalogo = await Product.find(filter);
-    
-    res.status(200).json({
-        status: 'success',
-        data: catalogo
-    })
+    }else if(showInactive === 'true'){
+        req.query.isActive = 'false';
+    }else{
+        req.query.isActive = 'true';
+    }
+    next();
 });
 
 //revisar que cuando se creen no se creen duplicados de los ya existentes, ver si lo puedo dejar como una validacion opcional/ temporal

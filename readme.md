@@ -95,3 +95,8 @@ Los mails tienen varios tipos según el caso, particularmente para crear un usua
 ###Sobre los roles
 
 La idea es que haya 1 solo administrador, o la cantidad mínima posible de usuarios con el máximo status, éste no se puede modificar y no se pueden tomar acciones entre sí. sí pueden tener poder de cambio de rol/suspensión + otras acciones que se consideren pertinentes sobre el resto de los usuarios.
+
+
+###ProductController
+
+acá es importante actualizar la funcion checkCatalogue segun crezcan las opciones disponibles en los filtros del editor del lado cliente

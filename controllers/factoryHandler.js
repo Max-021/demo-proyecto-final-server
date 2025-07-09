@@ -26,20 +26,18 @@ exports.getAll = (Model) =>
         //para permitir rutas anidadas, temporal REVISAR
         let filter = {}
         if(req.params.id) filter = {item: req.params.id};
-
-        //ejecutar query, temporal REVISAR
+        //ejecutar filteredModel
         const features = new ApiFeat(Model.find(filter), req.query)
             .filter()
             .sort()
             .limitFields()
             .paginate();
 
-        const doc = await features.query;
-
+        const doc = await features.filteredModel;
         res.status(200).json({
             status: 'success',
             results: doc.length,
-            data: doc
+            data: doc,
         });
 })
 

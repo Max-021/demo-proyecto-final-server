@@ -1,6 +1,6 @@
 class ApiFeat {
-    constructor(query, queryString) {
-        this.query = query;
+    constructor(filteredModel, queryString) {
+        this.filteredModel = filteredModel;
         this.queryString = queryString
     }
     filter() {
@@ -12,15 +12,15 @@ class ApiFeat {
         let queryStr = JSON.stringify(queryObj);
         queryStr = queryStr.replace(/\b(gte|gt|lt|lte)\b/g, (match) => `$${match}`);
 
-        this.query = this.query.find(JSON.parse(queryStr));
+        this.filteredModel = this.filteredModel.find(JSON.parse(queryStr));
         return this;
     }
     sort() {
         if (this.queryString.sort) {
             const sortBy = this.queryString.sort.split(",").join(" ");
-            this.query = this.query.sort(sortBy);
+            this.filteredModel = this.filteredModel.sort(sortBy);
           } else {
-            this.query = this.query.sort("-createdAt");
+            this.filteredModel = this.filteredModel.sort("-createdAt");
           }
         return this;
     }
@@ -28,9 +28,9 @@ class ApiFeat {
             //field limiting
     if (this.queryString.fields) {
         const fields = this.queryString.fields.split(",").join(" ");
-        this.query = this.query.select(fields);
+        this.filteredModel = this.filteredModel.select(fields);
       } else {
-        this.query = this.query.select("-__v");
+        this.filteredModel = this.filteredModel.select("-__v");
       }
       return this;
     }
@@ -39,7 +39,7 @@ class ApiFeat {
     const page = this.queryString.page * 1 || 1;
     const limit = this.queryString.limit * 1 || 100;
     const skip = (page - 1) * limit;
-    this.query = this.query.skip(skip).limit(limit);
+    this.filteredModel = this.filteredModel.skip(skip).limit(limit);
     return this;
     }
 }

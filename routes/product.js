@@ -10,7 +10,7 @@ const {editingRoles} = require('../data/roles');
 const router = express.Router();
 
 //routes
-router.route('/').get(productController.catalogo);//MEJORAR ESTO!!!!!!! acomodar el tema de protect y restrict
+router.route('/').get(productController.checkCatalogue, productController.catalogo);
 router.get('/existing/:id', productController.getProduct);
 
 router.use(authController.protect);
