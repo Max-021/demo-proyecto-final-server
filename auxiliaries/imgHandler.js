@@ -1,5 +1,6 @@
 const sharp = require('sharp');
 const multer = require('multer');
+const AppError = require('../auxiliaries/appError')
 
 const { v2: cloudinary } = require('cloudinary');
 const catchAsync = require('./catchAsync');
@@ -11,7 +12,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-const IMG_WIDTH  = 750;  // por ejemplo
+const IMG_WIDTH  = 500;  // por ejemplo
 const IMG_HEIGHT = 500;
 const DEFAULT_IMG = "https://res.cloudinary.com/dkjl60cwy/image/upload/v1740593162/products/tsauufqjnqjg3dveprym.webp";
 
@@ -47,10 +48,12 @@ exports.uploadImages = catchAsync(async (req, res, next) => {
     }
     else if (newFilesMap[key]) {
       const file     = newFilesMap[key];
+
+      if(!file.type?.startsWith("image/")) return next(new AppError(`Only images allowed, ${file.name} is not a valid image`, 400));
+
       const inputPath = file.path || file.filepath;
       const buffer   = await sharp(inputPath)
-        .resize(IMG_WIDTH, IMG_HEIGHT)
-        .toFormat('webp')
+        // .resize(IMG_WIDTH, IMG_HEIGHT, {fit: 'inside', withoutEnlargement: true,})// lo dejo comentado porque ya hago esto en el cliente, pero por las dudas no lo borro
         .toBuffer();
 
       const url = await new Promise((resolve, reject) => {
