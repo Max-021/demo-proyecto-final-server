@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 const productStatusEnum = ['normal',];//acá agregar otros estados segun se determine
 
-const validationFunctions = require('../auxiliaries/validationFunctions');
+const validationFunction = require('../auxiliaries/validationFunctions/colorValidation');
 
 const stockSchema = new mongoose.Schema({
     quantity: {
@@ -17,7 +17,7 @@ const stockSchema = new mongoose.Schema({
         validate: {
             message: props => `${props.value} no es un color válido`,
             validator: async (v) => {
-                return validationFunctions(v, 'colors')
+                return validationFunction(v, 'colors')
             }
         },
     },

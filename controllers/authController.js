@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const {promisify} = require('util');
 const User = require('../models/user');
 const catchAsync = require('../auxiliaries/catchAsync');
+const passwordValidation = require('../auxiliaries/pwdValidations');
 const AppError = require('../auxiliaries/appError');
 const Email = require('../auxiliaries/mail');
 const { userInfo } = require('os');
@@ -321,4 +322,40 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 exports.restrictToSelf = catchAsync(async (req,res,next) => {
     if(req.user.id !== req.params.id) return next(new AppError(`You don't have permission to perform this action`, 403));
     next();
+})
+
+exports.validatePasswordRules = catchAsync(async (req,res,next) => {//es un middleware que desarrollé pero dejé de usarlo porque moví la lógica de validación dentro del modelo de mongoose
+    const {password} = req.body;
+    let token = req.params.token || null; 
+    let user;
+
+    if(token) {
+        const hashedToken = crypto.createHash("sha256").update(req.params.token).digest('hex');        
+        user = await User.findOne({passwordResetToken: hashedToken, passwordResetExpires: { $gt: Date.now()}});
+        if(!user) return next(new AppError('Token invalid or expired.', 400));
+    }else{
+        return this.protect(req,res,next);
+    }
+    const errors = passwordValidation.checkGeneralPasswordRules(password, user);
+    if (errors.length) {
+    return next(new AppError(errors.join('\n'), 400));
+    }
+
+    req.user = user;
+    next();
+})
+
+exports.validatePasswordStatus = catchAsync(async (req,res,next) => {
+    const {password} = req.body;
+    const {username, mail, firstName, lastName} = req.user;
+    console.log(password)
+
+    if(passwordValidation.isDerivedFromUser(password, {username, mail, firstName, lastName})) return next(new AppError('Password cannot be derived from other user information', 400));
+    if(passwordValidation.isWeakPassword(password)) return next(new AppError('The password is weak, and could be easily compromised', 400));
+
+    console.log('OK!')
+    res.status(200).json({
+        status: 'success',
+        data: {message: 'Password is Ok!'},
+    })
 })

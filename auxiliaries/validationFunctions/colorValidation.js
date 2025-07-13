@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const EnumFields = require('../models/enumFields');
+const EnumFields = require('../../models/enumFields');
 
 module.exports = async (v, type) => {
     const doc = await EnumFields.findOne({name: type});

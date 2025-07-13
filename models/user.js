@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const validator = require('validator');
+const passwordValidation = require('../auxiliaries/validationFunctions/passwordValidation');
 
 const salt = 12;
 const enumRole = ['admin', 'user', 'editor',];
@@ -21,8 +22,18 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,//temporal, revisar, tengo que ver que medidas de seguridad pongo aca + tambien ver otros lugares para proteger
-        minlength: 8,
+        minlength: 12,
         required: [function() { return !this.passwordResetToken; }, 'A user must have a password.'],
+        validate: {
+            validator: function(v) {
+                const errors = passwordValidation(v, this)
+                return errors.length === 0;
+            },
+            message: function(props){
+                const errors = passwordValidation(props.value, this);
+                return errors.join(", ");
+            },
+        }
     },
     role: {
         type: String,

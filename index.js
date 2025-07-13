@@ -64,22 +64,25 @@ app.use(`${apiUrl}/user`, userRouter);
 app.use(`${apiUrl}/products`, productRouter);
 app.use(`${apiUrl}/enumFields`,enumFieldsRouter);
 
-app.use((err,req,res,next) => {
-    console.error(err.stack);
-    console.error(err.statusCode);
+app.use((err, req, res, next) => {
+  console.error(err.stack);
 
-    if(err instanceof AppError){
-        return res.status(err.statusCode).json({
-            status: err.status || 'error',
-            message:err.message,
-        })
-    }
+  if (err instanceof AppError) {
+    const errors = Array.isArray(err.message)
+      ? err.message
+      : [err.message];
 
-    res.status(500).json({
-        status: 'error',
-        message: 'Something went wrong!',
-        err: err.stack//temporal, borrar
-    })
+    return res.status(err.statusCode).json({
+      status: err.status || 'error',
+      errors,
+    });
+  }
+
+  // Para errores genéricos
+  res.status(500).json({
+    status: 'error',
+    errors: ['Something went wrong!'],
+  });
 });
 
 app.all('*', (req, res, next) => {
