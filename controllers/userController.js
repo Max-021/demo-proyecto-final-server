@@ -18,7 +18,7 @@ exports.getUsers = catchAsync(async (req,res,next) => {
 exports.deleteUser = catchAsync(async (req,res,next) => {
     const user = await User.findByIdAndDelete(req.params.id);
     //404 errors
-    if(!user) return next(new AppError('No document found with this Id', 404));
+    if(!user) return next(new AppError('user.deleteUser.noUser', 404));
 
     await new Email(user, '').deleteAccount();
     res.clearCookie('jwt', {
@@ -63,7 +63,7 @@ exports.getRoles = catchAsync(async (req,res,next) =>{
 exports.toggleSuspension = catchAsync(async (req,res,next) => {
     console.log(req.body)//temporal, fijarse de poder recibir y enviar por mail un motivo de suspensión
     const { _id, status } = req.body;
-    if (! _id || ! status) return next(new AppError('Some fields are missing, retry.', 400));
+    if (! _id || ! status) return next(new AppError('user.toggleSuspension.missingFields', 400));
 
     let newStatus;
     if (status === 'active') {
@@ -71,11 +71,11 @@ exports.toggleSuspension = catchAsync(async (req,res,next) => {
     } else if (status === 'suspended') {
         newStatus = 'active';
     } else {
-        return next(new AppError(`Cannot toggle status from "${status}".`, 400));
+        return next(new AppError(`user.toggleSuspension.unableToToggle`, 400, {status}));
     }
 
     const user = await User.findByIdAndUpdate(_id, { status: newStatus }, { new: true });
-    if (!user) return next(new AppError('User not found.', 404));
+    if (!user) return next(new AppError('user.toggleSuspension.noUser', 404));
     if (newStatus === 'suspended') {
         await new Email(user, '').userSuspension();
     } else {
@@ -90,10 +90,10 @@ exports.toggleSuspension = catchAsync(async (req,res,next) => {
 
 exports.changeUserRole = catchAsync(async (req,res,next) => {
     console.log(req.body)
-    if(!req.body._id) return next(new AppError('An error ocurred and some fields are missing, retry.',400));
+    if(!req.body._id) return next(new AppError('user.changeUserRole.missingFields',400));
     
     const updatedUser = await User.findByIdAndUpdate(req.body._id, {role: req.body.role}, {new: true})
-    if(!updatedUser) return next(new AppError('No user found with this id.', 404));
+    if(!updatedUser) return next(new AppError('user.changeUserRole.noUser', 404));
     await new Email(updatedUser, '', updatedUser.role).updatedRole();
 
     res.status(200).json({

@@ -28,11 +28,11 @@ exports.createProduct = catchAsync(async (req,res,next) => {
         try {
             newStock = typeof req.fields.stock === 'string' ? JSON.parse(req.fields.stock) : req.fields.stock;
         } catch (error) {
-            return next(new AppError('Stock format invalid',400));
+            return next(new AppError('product.createProduct.invalidStock',400));
         }
     }
     const price = parseFloat(req.fields.price)
-    if(isNaN(price)) return next(new AppError('Price format invalid', 400));
+    if(isNaN(price)) return next(new AppError('product.createProduct.invalidPrice', 400));
     const doc = await Product.create({
         name: req.fields.name,
         descr: req.fields.descr,
@@ -50,13 +50,13 @@ exports.createProduct = catchAsync(async (req,res,next) => {
 });
 exports.updateFromSingleEnumField = catchAsync(async (req,res,next) => {
     const {newInfo, oldInfo, fieldName} = req.body;
-    if(!oldInfo)            return next(new AppError('Old value required', 400));
-    if(!newInfo)            return next(new AppError('New value required', 400));
-    if(oldInfo === newInfo) return next(new AppError('Old and new values are the same', 400));
-    if(!fieldName)          return next(new AppError('Field type required', 400));
+    if(!oldInfo)            return next(new AppError('product.updateFromSingleEnumField.missingOldValue', 400));
+    if(!newInfo)            return next(new AppError('product.updateFromSingleEnumField.missingNewValue', 400));
+    if(oldInfo === newInfo) return next(new AppError('product.updateFromSingleEnumField.sameValues', 400));
+    if(!fieldName)          return next(new AppError('product.updateFromSingleEnumField.missingFieldType', 400));
 
     const schemaType = Product.schema.path(fieldName);
-    if (!schemaType) return next(new AppError(`Field "${fieldName}" does not exist on Product`, 400));
+    if (!schemaType) return next(new AppError(`product.updateFromSingleEnumField.incorrectFieldName`, 400, {fieldName}));
     const data = await Product.updateMany({[fieldName]: oldInfo}, {[fieldName]: newInfo}, {runValidators: true} )
     res.status(200).json({
         status: 'success',
@@ -67,14 +67,14 @@ exports.updateFromArrayEnumField = catchAsync(async (req, res, next) => {
     console.log(req.body);
     const {newInfo, oldInfo, fieldName} = req.body;
 
-    if(!oldInfo)            return next(new AppError('Old value required', 400));
-    if(!newInfo)            return next(new AppError('New value required', 400));
-    if(oldInfo === newInfo) return next(new AppError('Old and new values are the same', 400));
-    if(!fieldName)          return next(new AppError('Field type required', 400));
+    if(!oldInfo)            return next(new AppError('product.updateFromArrayEnumField.missingOldValue', 400));
+    if(!newInfo)            return next(new AppError('product.updateFromArrayEnumField.missingNewValue', 400));
+    if(oldInfo === newInfo) return next(new AppError('product.updateFromArrayEnumField.sameValues', 400));
+    if(!fieldName)          return next(new AppError('product.updateFromArrayEnumField.missingFieldType', 400));
 
     const schemaType = Product.schema.path(fieldName);
-    if (!schemaType) return next(new AppError(`Field "${fieldName}" does not exist on Product`, 400));
-    if(schemaType.instance !== 'Array') return next(new AppError(`${fieldName} is not an array`, 400));
+    if (!schemaType) return next(new AppError(`product.updateFromArrayEnumField.incorrectFieldName`, 400, {fieldName}));
+    if(schemaType.instance !== 'Array') return next(new AppError(`product.updateFromArrayEnumField.notArrayType`, 400, {fieldName}));
 
     const data = await Product.updateMany(
         { [fieldName]: oldInfo }, // Buscar solo productos que contenían el color viejo
@@ -101,16 +101,16 @@ exports.updateFromArrayEnumField = catchAsync(async (req, res, next) => {
 exports.updateFromStockEnumField = catchAsync(async (req,res,next) => {
     const {newInfo, oldInfo, fieldName} = req.body;
 
-    if(!oldInfo)                            return next(new AppError('Old value required', 400));
-    if(!newInfo || newInfo==='')            return next(new AppError('New value required', 400));
-    if(oldInfo === newInfo)                 return next(new AppError('Old and new values are the same', 400));
-    if(!fieldName)                          return next(new AppError('Field type required', 400));
+    if(!oldInfo)                            return next(new AppError('product.updateFromStockEnumField.missingOldValue', 400));
+    if(!newInfo || newInfo==='')            return next(new AppError('product.updateFromStockEnumField.missingNewValue', 400));
+    if(oldInfo === newInfo)                 return next(new AppError('product.updateFromStockEnumField.sameValues', 400));
+    if(!fieldName)                          return next(new AppError('product.updateFromStockEnumField.missingFieldType', 400));
     const schemaType = Product.schema.path(fieldName);
-    if (!schemaType)                        return next(new AppError(`Field "${fieldName}" does not exist on Product`, 400));
-    if(schemaType.instance !== 'Array')     return next(new AppError(`${fieldName} is not an array`, 400));
+    if (!schemaType)                        return next(new AppError(`product.updateFromStockEnumField.incorrectFieldName`, 400,{fieldName}));
+    if(schemaType.instance !== 'Array')     return next(new AppError(`product.updateFromStockEnumField.notArrayType`, 400, {fieldName}));
     const subSchema = schemaType.schema;
-    if(!subSchema)                                                  return next(new AppError(`Field ${fieldName} is not a subdoc array`, 400));
-    if (!subSchema.path('color') || !subSchema.path('quantity'))    return next(new AppError("Subdoc must have color and quantity", 400));
+    if(!subSchema)                                                  return next(new AppError(`product.updateFromStockEnumField.notSubDocArray`, 400, {fieldName}));
+    if (!subSchema.path('color') || !subSchema.path('quantity'))    return next(new AppError("product.updateFromStockEnumField.notColorAndQuantity", 400));
 
     const pipeline = [
         { $set: {
@@ -155,11 +155,11 @@ exports.updateProduct = catchAsync(async (req,res,next) => {
         try {
             updatedStock = typeof req.fields.stock === 'string' ? JSON.parse(req.fields.stock) : req.fields.stock;
         } catch (error) {
-            return next(new AppError('Stock format invalid',400));
+            return next(new AppError('product.updateProduct.invalidStock',400));
         }
     }
     const product = await Product.findById(req.params.id);
-    if(!product) return next(new AppError('No document found with this Id', 404));
+    if(!product) return next(new AppError('product.updateProduct.noDocument', 404));
 
     if(Array.isArray(updatedStock)){
         product.stock = updatedStock.map(item => ({
@@ -177,7 +177,7 @@ exports.updateProduct = catchAsync(async (req,res,next) => {
             product.isActive = val === 'true' || val === true;
         }else if(key === 'price'){
             const p = parseFloat(val);
-            if(isNaN(p)) return next(new AppError('Price format invalid', 400));
+            if(isNaN(p)) return next(new AppError('product.updateProduct.invalidPrice', 400));
             product.price = p;
         }else{
             product[key] = val;

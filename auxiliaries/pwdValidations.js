@@ -41,24 +41,22 @@ exports.isWeakPassword = (password) => {
  */
 exports.checkGeneralPasswordRules = (password, user) => {
   const errors = [];
-  if (!password) {
-    errors.push('Contraseña requerida.');
-    return errors;
-  }
+  const langRoute = `auth.validatePasswordRules.validationErrors.`;
+  if (!password) return [`${langRoute}required`];
 
-  if (password.length < 12) errors.push('Mínimo 12 caracteres.');
-  if (password.length > 64) errors.push('Máximo 64 caracteres.');
-  if (!/[a-z]/.test(password)) errors.push('Debe incluir al menos una letra minúscula.');
-  if (!/[A-Z]/.test(password)) errors.push('Debe incluir al menos una letra mayúscula.');
-  if (!/\d/.test(password)) errors.push('Debe incluir al menos un número.');
-  if (!/[\W_]/.test(password)) errors.push('Debe incluir al menos un caracter especial.');
-  if (/^\s|\s$/.test(password)) errors.push('No empiece ni termine con espacios.');
+  if (password.length < 12)       errors.push(`${langRoute}minLength`);
+  if (password.length > 64)       errors.push(`${langRoute}maxLength`);
+  if (!/[a-z]/.test(password))    errors.push(`${langRoute}lowercase`);
+  if (!/[A-Z]/.test(password))    errors.push(`${langRoute}uppercase`);
+  if (!/\d/.test(password))       errors.push(`${langRoute}number`);
+  if (!/[\W_]/.test(password))    errors.push(`${langRoute}specialChar`);
+  if (/^\s|\s$/.test(password))   errors.push(`${langRoute}noEdgeSpaces`);
 
   if (exports.isWeakPassword(password)) {
-    errors.push('La contraseña es débil.');
+    errors.push(`${langRoute}weak`);
   }
   if (exports.isDerivedFromUser(password, user)) {
-    errors.push('No puede derivarse de datos personales.');
+    errors.push(`${langRoute}derivedFromUser`);
   }
 
   return errors;

@@ -11,6 +11,9 @@ const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
 const formidableMiddleware = require('express-formidable');
+const i18next = require('i18next');
+const i18Backend = require('i18next-fs-backend');
+const {LanguageDetector, handle} = require('i18next-http-middleware');
 
 const AppError = require('./auxiliaries/appError');
 const productRouter = require('./routes/product');
@@ -53,7 +56,21 @@ app.use(xss());
 //     })
 // );
 
-
+//para soporte de idiomas
+i18next
+  .use(i18Backend)
+  .use(LanguageDetector)
+  .init({
+    fallbackLng: 'en',
+    backend: {
+      loadPath: __dirname+'/locales/{{lng}}.json',
+    },
+    detection: {
+      order: ['header','querystring'],
+      lookupQuerystring: 'lang',
+    }
+  });
+app.use(handle(i18next));
 
 //reviar el tema puertos para el deploy, temporal
 
@@ -68,13 +85,14 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
 
   if (err instanceof AppError) {
-    const errors = Array.isArray(err.message)
-      ? err.message
-      : [err.message];
+    const keys = Array.isArray(err.message) ? err.message : [err.message];
+    const messages = keys.map(key => {
+      return req.t(key, err.data || {});
+    });
 
     return res.status(err.statusCode).json({
-      status: err.status || 'error',
-      errors,
+      status: err.statusCode.toString().startsWith("4") ? 'fail' : 'error',
+      message: messages,
     });
   }
 

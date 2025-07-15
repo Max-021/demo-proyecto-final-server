@@ -71,7 +71,7 @@ exports.createUser = catchAsync(async (req,res,next) => {
         newUser.passwordResetToken = undefined;
         newUser.passwordResetExpires = undefined;
         await newUser.save({validateBeforeSave: false});
-        return next(new AppError('An error ocurred sending the email, please try again in a few minutes', 500));
+        return next(new AppError('auth.createUser.emailSendError', 500));
     }
     
     const {_id: userId, username} = newUser
@@ -100,12 +100,12 @@ exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta 
         if(!freshUser){
             console.log('fresh user not')
             res.clearCookie('jwt', cookieOps);
-            return next(new AppError("The user belonging to this token no longer exists.", 401));
+            return next(new AppError("auth.alreadyLoggedIn.noUser", 401));
         }
         if(await freshUser.changedPasswordAfter(decoded.iat)){
             console.log('changed password')
             res.clearCookie('jwt', cookieOps);
-            return next(new AppError("Password changed recently, please log in again.", 401));
+            return next(new AppError("auth.alreadyLoggedIn.passwordChangedRecently", 401));
         }
         if(freshUser.status === 'inactive' || freshUser.status === 'suspended') {
             res.clearCookie('jwt', cookieOps);
@@ -134,13 +134,13 @@ exports.login = catchAsync(async (req,res,next) => {
     mail.trim();
     password.trim();
 
-    if(!mail || !password) return next(new AppError('Please provide email and/or password.',400));
+    if(!mail || !password) return next(new AppError('auth.login.missingData',400));
 
     const user = await User.findOne({mail}).select("+password");
     
-    if(!user || !(await user.correctPassword(password, user.password))) return next(new AppError('Incorrect email or password.',401));
+    if(!user || !(await user.correctPassword(password, user.password))) return next(new AppError('auth.login.incorrectData',401));
 
-    if(user.status === 'suspended') return next(new AppError(`This account is suspended. You can't login while in this condition.`, 403));
+    if(user.status === 'suspended') return next(new AppError(`auth.login.userSuspended`, 403));
     
     if(user.status === 'inactive') {
         user.status = 'active';
@@ -178,18 +178,18 @@ exports.protect = catchAsync(async (req, res, next) => {
         token = req.cookies.jwt;
     }
 
-    if(!token) return next(new AppError('To perform this action you must have logged in.', 401));
+    if(!token) return next(new AppError('auth.protect.noToken', 401));
 
     //verifico el token
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
     const freshUser = await User.findById(decoded.id)
 
-    if(!freshUser) return next(new AppError("The user does not exist.",401));
+    if(!freshUser) return next(new AppError("auth.protect.noUser",401));
 
     //temporal, funcion comentada porque se supone que no funciona como deberia, corregir, también reveer pertinencia de dar este tipo de informacion
     // if(freshUser.changedPasswordAfter(decoded.iat)){
-    //     return next(new AppError('Password changed recently, try again',401))
+    //     return next(new AppError('auth.protect.passwordChangedRecently',401))
     // }
     console.log("viene bien")
     req.user = freshUser;
@@ -200,7 +200,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 exports.restrict = (...roles) => {
     return (req, res, next) => {
       if (!req.user || !roles.includes(req.user.role)) {
-        return next(new AppError(`You don't have permission.`, 403));
+        return next(new AppError(`auth.restrict.notAllowed`, 403));
       }
       next();
     }
@@ -214,7 +214,7 @@ exports.getUserInfo = catchAsync(async (req,res,next) =>{
         const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
         const freshUser = await User.findById(decoded.id,fieldsNeeded);
         if(!freshUser){
-            return next(new AppError("The user belonging to this token no longer exists", 401));
+            return next(new AppError("auth.getUserInfo.noUser", 401));
         }
         res.status(200).json({
             status:'success',
@@ -227,7 +227,7 @@ exports.getUserInfo = catchAsync(async (req,res,next) =>{
 exports.passwordForgotten = catchAsync(async (req, res, next) => {
     const user = await User.findOne({mail: req.body.mail});
     if(!user){
-        return next(new AppError("The provided email doesn't belong to any user",404));
+        return next(new AppError("auth.passwordForgotten.noUser",404));
     }
 
     const resetToken = user.createPasswordResetToken();
@@ -236,13 +236,15 @@ exports.passwordForgotten = catchAsync(async (req, res, next) => {
     const baseUrl = process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL?.trim() : process.env.DEV_URL?.trim();
     const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
     try {
+        console.log(user)
+        console.log(resetUrl)
         await new Email(user, resetUrl).passwordReset();
     } catch (error) {
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
         await user.save({validateBeforeSave: false});
 
-        return next(new AppError('An error ocurred sending the email, please try again in a few minutes.', 500));
+        return next(new AppError('auth.passwordForgotten.emailSendError', 500));
     }
 
     console.log(resetUrl)
@@ -256,13 +258,13 @@ exports.passwordForgotten = catchAsync(async (req, res, next) => {
 })
 exports.resetPassword = catchAsync(async (req,res,next) => {
     const { password, confirmPassword } = req.body;
-    if (!password || !confirmPassword)  return next(new AppError('Both password and confirmation are required', 400));
-    if (password !== confirmPassword)   return next(new AppError('Passwords do not match', 400));
+    if (!password || !confirmPassword)  return next(new AppError('auth.resetPassword.missingPassword', 400));
+    if (password !== confirmPassword)   return next(new AppError('auth.resetPassword.passwordMismatch', 400));
 
     const hashedToken = crypto.createHash("sha256").update(req.params.token).digest('hex');
 
     const user = await User.findOne({passwordResetToken: hashedToken, passwordResetExpires: {$gt: Date.now()}});
-    if(!user) return next(new AppError('Invalid or expired token', 400));
+    if(!user) return next(new AppError('auth.resetPassword.noUser', 400));
 
     user.password = password;
     user.passwordChangedAt = Date.now();
@@ -277,7 +279,7 @@ exports.validateResetToken = catchAsync(async (req,res,next) => {
     
     const user = await User.findOne({passwordResetToken: hashedToken, passwordResetExpires: { $gt: Date.now()}});
 
-    if(!user) return next(new AppError("Invalid or expired token", 400));
+    if(!user) return next(new AppError("auth.validateResetToken.noUser", 400));
     
     res.status(200).json({status: 'success'});
 })
@@ -291,7 +293,7 @@ exports.retryPassword = catchAsync(async (req, res, next) => {
         passwordResetExpires: { $gt: Date.now()},
     });
     if(!user){
-        return next(new AppError("Token expired or invalid token"));
+        return next(new AppError("auth.retryPassword.noUser"));
     }
 
     user.password = req.body.password;
@@ -305,13 +307,13 @@ exports.retryPassword = catchAsync(async (req, res, next) => {
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
     const {password, newPassword, newPasswordConfirm} = req.body;    
-    if(!password || !newPassword || !newPasswordConfirm)        return next(new AppError("You must send current, new, and confirmed new password.",400));
-    if(newPassword !== newPasswordConfirm)                      return next(new AppError("The new password and its confirmation doesn't match.", 400));
-    if(password === newPassword)                                return next(new AppError('Your new password must be different from the current one.', 400));
+    if(!password || !newPassword || !newPasswordConfirm)        return next(new AppError("auth.updatePassword.missingPasswords",400));
+    if(newPassword !== newPasswordConfirm)                      return next(new AppError("auth.updatePassword.passwordMismatch", 400));
+    if(password === newPassword)                                return next(new AppError('auth.updatePassword.sameNewPassword', 400));
 
     const user = await User.findById(req.user.id).select('+password');
-    if(!user)                                                   return next(new AppError('User not found.',404));
-    if(!(await user.correctPassword(password, user.password)))  return next(new AppError('Incorrect password.',401));
+    if(!user)                                                   return next(new AppError('auth.updatePassword.noUser',404));
+    if(!(await user.correctPassword(password, user.password)))  return next(new AppError('auth.updatePassword.incorrectPassword',401));
 
     user.password = newPassword;
     user.passwordChangedAt = Date.now();
@@ -320,7 +322,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 })
 
 exports.restrictToSelf = catchAsync(async (req,res,next) => {
-    if(req.user.id !== req.params.id) return next(new AppError(`You don't have permission to perform this action`, 403));
+    if(req.user.id !== req.params.id) return next(new AppError(`auth.restrictToSelf.notAllowed`, 403));
     next();
 })
 
@@ -332,13 +334,13 @@ exports.validatePasswordRules = catchAsync(async (req,res,next) => {//es un midd
     if(token) {
         const hashedToken = crypto.createHash("sha256").update(req.params.token).digest('hex');        
         user = await User.findOne({passwordResetToken: hashedToken, passwordResetExpires: { $gt: Date.now()}});
-        if(!user) return next(new AppError('Token invalid or expired.', 400));
+        if(!user) return next(new AppError('auth.validatePasswordRules.noUser', 400));
     }else{
         return this.protect(req,res,next);
     }
     const errors = passwordValidation.checkGeneralPasswordRules(password, user);
     if (errors.length) {
-    return next(new AppError(errors.join('\n'), 400));
+    return next(new AppError(errors, 400));
     }
 
     req.user = user;
@@ -350,8 +352,8 @@ exports.validatePasswordStatus = catchAsync(async (req,res,next) => {
     const {username, mail, firstName, lastName} = req.user;
     console.log(password)
 
-    if(passwordValidation.isDerivedFromUser(password, {username, mail, firstName, lastName})) return next(new AppError('Password cannot be derived from other user information', 400));
-    if(passwordValidation.isWeakPassword(password)) return next(new AppError('The password is weak, and could be easily compromised', 400));
+    if(passwordValidation.isDerivedFromUser(password, {username, mail, firstName, lastName})) return next(new AppError('auth.validatePasswordStatus.derivedPassword', 400));
+    if(passwordValidation.isWeakPassword(password)) return next(new AppError('auth.validatePasswordStatus.weakPassword', 400));
 
     console.log('OK!')
     res.status(200).json({

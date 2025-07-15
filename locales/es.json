@@ -1,0 +1,132 @@
+{
+    "factoryHandler": {
+        "noDocument": "Ningún documento encontrado con el Id provisto."
+    },
+    "auth": {
+        "createUser": {
+            "emailSendError": "Ocurrió un error enviando el email, por favor reintente en unos minutos."
+        },
+        "alreadyLoggedIn": {
+            "noUser": "El usuario al que pertenece este token ya no existe.",
+            "passwordChangedRecently": "Contraseña cambiada recientemente, por favor inicie sesión nuevamente."
+        },
+        "login": {
+            "missingData": "Por favor provea un email y/o contraseña.",
+            "incorrectData": "Email o contraseña incorrectos.",
+            "userSuspended": "Esta cuenta está suspendida. No puedes iniciar sesión en esta condición."
+        },
+        "protect": {
+            "noToken": "Para realizar esta acción debes haber iniciado sesión.",
+            "noUser": "El usuario no existe.",
+            "passwordChangedRecently": "Contraseña cambiada recientemente, por favor inicie sesión nuevamente."
+        },
+        "restrict": {
+            "notAllowed": "No tienes permiso para realizar esta acción."
+        },
+        "getUserInfo": {
+            "noUser":"El usuario al que pertenece este token ya no existe."
+        },
+        "passwordForgotten": {
+            "noUser": "El email provisto no pertenece a ningún usuario.",
+            "emailSendError": "Ocurrió un error enviando el email, por favor reintente en unos minutos."
+        },
+        "resetPassword": {
+            "missingPassword": "Tanto la contraseña como la confirmación son requeridas.",
+            "passwordMismatch": "Las nueva contraseña no coincide con la confirmación de la nueva contraseña.",
+            "noUser": "Token inválido o expirado."
+        },
+        "validateResetToken": {
+            "noUser":"Token inválido o expirado."
+        },
+        "retryPassword": {
+            "noUser":"Token inválido o expirado."
+        },
+        "updatePassword": {
+            "missingPasswords": "Debes enviar las contraseñas actual, nueva y la confirmación de la nueva contraseña.",
+            "passwordMismatch": "Las nueva contraseña no coincide con la confirmación de la nueva contraseña.",
+            "sameNewPassword": "La nueva contraseña debe ser diferente de la actual.",
+            "noUser": "Usuario no encontrado.",
+            "incorrectPassword": "Contraseña incorrecta."
+        },
+        "restrictToSelf": {
+            "notAllowed": "No tienes permiso para realizar esta acción."
+        },
+        "validatePasswordRules": {
+            "noUser": "Token inválido o expirado.",
+            "validationErrors": {
+                "required":         "La contraseña es requerida.",
+                "minLength":        "Mínimo 12 caracteres.",
+                "maxLength":        "Máximo 64 caracteres.",
+                "lowercase":        "Debe incluir al menos una letra minúscula.",
+                "uppercase":        "Debe incluir al menos una letra mayúscula.",
+                "number":           "Debe incluir al menos un número.",
+                "specialChar":      "Debe incluir al menos un caracter especial.",
+                "noEdgeSpaces":     "No empiece ni termine con espacios.",
+                "weak":             "La contraseña es vulnerable.",
+                "derivedFromUser":  "La contraseña no puede ser derivada de otros datos del usuario."
+            }
+        },
+        "validatePasswordStatus": {
+            "derivedPassword":"La contraseña no puede ser derivada de otros datos del usuario.",
+            "weakPassword":"La contraseña es vulnerable."
+        }
+    },
+    "user": {
+        "deleteUser": {
+            "noUser": "Ningún usuario encontrado con este Id."
+        },
+        "toggleSuspension": {
+            "missingFields": "Faltan algunos campos, reintente.",
+            "unableToToggle": "No se puede cambiar el status del usuario de: \"{{status}}\".",
+            "noUser": "Usuario no encontrado."
+        },
+        "changeUserRole": {
+            "missingFields": "Ocurrió un error y faltan algunos campos, reintente.",
+            "noUser": "Ningún usuario encontrado con este Id."
+        }
+    },
+    "product": {
+        "createProduct": {
+            "invalidStock": "Formato de stock inválido.",
+            "invalidPrice": "Formato de precio inválido."
+        },
+        "updateFromSingleEnumField": {
+            "missingOldValue": "Valor previo requerido.",
+            "missingNewValue": "Valor nuevo requerido.",
+            "sameValues": "Los valores previo y nuevo son iguales.",
+            "missingFieldType": "Tipo de campo requerido.",
+            "incorrectFieldName": "El campo \"{{fieldName}}\" no existe en Producto."
+        },
+        "updateFromArrayEnumField": {
+            "missingOldValue": "Valor previo requerido.",
+            "missingNewValue": "Valor nuevo requerido.",
+            "sameValues": "Los valores previo y nuevo son iguales.",
+            "missingFieldType": "Tipo de campo requerido.",
+            "incorrectFieldName": "El campo \"{{fieldName}}\" no existe en Producto.",
+            "notArrayType": "\"{{fieldName}}\" no es una lista."
+        },
+        "updateFromStockEnumField": {
+            "missingOldValue": "Valor previo requerido.",
+            "missingNewValue": "Valor nuevo requerido.",
+            "sameValues": "Los valores previo y nuevo son iguales.",
+            "missingFieldType": "Tipo de campo requerido.",
+            "incorrectFieldName": "El campo \"{{fieldName}}\" no existe en Producto.",
+            "notArrayType": "\"{{fieldName}}\" no es una lista.",
+            "notSubDocArray":"El campo \"{{fieldName}}\" no es un documento de la lista.",
+            "notColorAndQuantity":"El subdocumento debe tener color y cantidad como campos."
+        },
+        "updateProduct": {
+            "invalidStock": "Formato de stock inválido.",
+            "noDocument": "Ningún producto encontrado con el Id provisto.",
+            "invalidPrice": "Formato de precio inválido."
+        }
+    },
+    "enumFields": {
+
+    },
+    "imgHandler": {
+        "uploadImages": {
+            "formatNotAllowed": "Solo imágenes permitidas, \"{{filename}}\" no es una imagen válida."
+        }
+    }
+}

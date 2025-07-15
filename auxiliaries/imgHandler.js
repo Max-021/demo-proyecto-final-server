@@ -49,7 +49,11 @@ exports.uploadImages = catchAsync(async (req, res, next) => {
     else if (newFilesMap[key]) {
       const file     = newFilesMap[key];
 
-      if(!file.type?.startsWith("image/")) return next(new AppError(`Only images allowed, ${file.name} is not a valid image`, 400));
+      if(!file.type?.startsWith("image/")) {
+        const filename = file.name
+        return next(new AppError(`imgHandler.uploadImages.formatNotAllowed`, 400, {filename}));
+      }
+      // if(!file.type?.startsWith("image/")) return next(new AppError(`Only images allowed, ${file.name} is not a valid image`, 400));
 
       const inputPath = file.path || file.filepath;
       const buffer   = await sharp(inputPath)

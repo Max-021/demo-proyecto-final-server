@@ -1,0 +1,132 @@
+{
+    "factoryHandler": {
+        "noDocument": "No document found with this ID."
+    },
+    "auth": {
+        "createUser": {
+            "emailSendError": "An error ocurred sending the email, please try again in a few minutes."
+        },
+        "alreadyLoggedIn": {
+            "noUser": "The user belonging to this token no longer exists.",
+            "passwordChangedRecently": "Password changed recently, please log in again."
+        },
+        "login": {
+            "missingData": "Please provide email and/or password.",
+            "incorrectData": "Incorrect email or password.",
+            "userSuspended": "This account is suspended. You can't login while in this condition."
+        },
+        "protect": {
+            "noToken": "To perform this action you must have logged in.",
+            "noUser": "The user does not exist.",
+            "passwordChangedRecently": "Password changed recently, login again."
+        },
+        "restrict": {
+            "notAllowed": "You don't have permission."
+        },
+        "getUserInfo": {
+            "noUser":"The user belonging to this token no longer exists."
+        },
+        "passwordForgotten": {
+            "noUser": "The provided email doesn't belong to any user.",
+            "emailSendError": "An error ocurred sending the email, please try again in a few minutes."
+        },
+        "resetPassword": {
+            "missingPassword": "Both password and confirmation are required.",
+            "passwordMismatch": "Passwords do not match.",
+            "noUser": "Invalid or expired token."
+        },
+        "validateResetToken": {
+            "noUser":"Invalid or expired token."
+        },
+        "retryPassword": {
+            "noUser":"Invalid or expired token."
+        },
+        "updatePassword": {
+            "missingPasswords": "You must send current, new, and confirmed new password.",
+            "passwordMismatch": "The new password and its confirmation doesn't match.",
+            "sameNewPassword": "Your new password must be different from the current one.",
+            "noUser": "User not found.",
+            "incorrectPassword": "Incorrect password."
+        },
+        "restrictToSelf": {
+            "notAllowed": "You don't have permission to perform this action."
+        },
+        "validatePasswordRules": {
+            "noUser": "Invalid or expired token.",
+            "validationErrors": {
+                "required":         "Password is required.",
+                "minLength":        "Must be at least 12 characters.",
+                "maxLength":        "Must be at most 64 characters.",
+                "lowercase":        "Must include at least one lowercase letter.",
+                "uppercase":        "Must include at least one uppercase letter.",
+                "number":           "Must include at least one digit.",
+                "specialChar":      "Must include at least one special character.",
+                "noEdgeSpaces":     "Cannot start or end with spaces.",
+                "weak":             "Password is too weak.",
+                "derivedFromUser":  "Cannot be derived from personal data."
+            }
+        },
+        "validatePasswordStatus": {
+            "derivedPassword":"Password cannot be derived from other user information.",
+            "weakPassword":"The password is weak, and could be easily compromised."
+        }
+    },
+    "user": {
+        "deleteUser": {
+            "noUser": "No user found with this Id."
+        },
+        "toggleSuspension": {
+            "missingFields": "Some fields are missing, retry.",
+            "unableToToggle": "Cannot toggle status from \"{{status}}\".",
+            "noUser": "User not found."
+        },
+        "changeUserRole": {
+            "missingFields": "An error ocurred and some fields are missing, retry.",
+            "noUser": "No user found with this Id."
+        }
+    },
+    "product": {
+        "createProduct": {
+            "invalidStock": "Stock format invalid.",
+            "invalidPrice": "Price format invalid."
+        },
+        "updateFromSingleEnumField": {
+            "missingOldValue": "Old value required.",
+            "missingNewValue": "New value required.",
+            "sameValues": "Old and new values are the same.",
+            "missingFieldType": "Field type required.",
+            "incorrectFieldName": "Field \"{{fieldName}}\" does not exist on Product."
+        },
+        "updateFromArrayEnumField": {
+            "missingOldValue": "Old value required.",
+            "missingNewValue": "New value required.",
+            "sameValues": "Old and new values are the same.",
+            "missingFieldType": "Field type required.",
+            "incorrectFieldName": "Field \"{{fieldName}}\" does not exist on Product.",
+            "notArrayType": "\"{{fieldName}}\" is not an array."
+        },
+        "updateFromStockEnumField": {
+            "missingOldValue": "Old value required.",
+            "missingNewValue": "New value required.",
+            "sameValues": "Old and new values are the same.",
+            "missingFieldType": "Field type required.",
+            "incorrectFieldName": "Field \"{{fieldName}}\" does not exist on Product.",
+            "notArrayType": "\"{{fieldName}}\" is not an array.",
+            "notSubDocArray":"Field \"{{fieldName}}\" is not a subdoc array.",
+            "notColorAndQuantity":"Subdoc must have color and quantity."
+        },
+        "updateProduct": {
+            "invalidStock": "Stock format invalid.",
+            "noDocument": "No product found with this Id.",
+            "invalidPrice": "Price format invalid."
+        }
+    },
+    "enumFields": {
+
+    },
+    "imgHandler": {
+        "uploadImages": {
+            "formatNotAllowed": "Only images allowed, \"{{filename}}\" is not a valid image"
+        }
+    }
+}
