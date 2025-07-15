@@ -199,12 +199,10 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 exports.restrict = (...roles) => {
     return (req, res, next) => {
-      if (!req.user || !roles.includes(req.user.role)) {
-        return next(new AppError(`auth.restrict.notAllowed`, 403));
-      }
-      next();
+        if (!req.user || !roles.includes(req.user.role)) return next(new AppError(`auth.restrict.notAllowed`, 403));
+        next();
     }
-  }
+}
 
 exports.getUserInfo = catchAsync(async (req,res,next) =>{
 
@@ -240,6 +238,7 @@ exports.passwordForgotten = catchAsync(async (req, res, next) => {
         console.log(resetUrl)
         await new Email(user, resetUrl).passwordReset();
     } catch (error) {
+        console.error(error)
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
         await user.save({validateBeforeSave: false});

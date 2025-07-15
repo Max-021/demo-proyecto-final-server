@@ -22,7 +22,6 @@ exports.checkCatalogue = catchAsync(async (req,res,next) => {
 
 //revisar que cuando se creen no se creen duplicados de los ya existentes, ver si lo puedo dejar como una validacion opcional/ temporal
 exports.createProduct = catchAsync(async (req,res,next) => {
-    console.log(req.fields)
     let newStock = [];
     if(req.fields.stock){
         try {
@@ -31,6 +30,7 @@ exports.createProduct = catchAsync(async (req,res,next) => {
             return next(new AppError('product.createProduct.invalidStock',400));
         }
     }
+    req.fields.price = 'hola'
     const price = parseFloat(req.fields.price)
     if(isNaN(price)) return next(new AppError('product.createProduct.invalidPrice', 400));
     const doc = await Product.create({

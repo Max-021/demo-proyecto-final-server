@@ -4,13 +4,14 @@ const formidableMiddleware = require('express-formidable');
 
 const productController = require('../controllers/productController');
 const authController = require('../controllers/authController');
+const productMiddlewares = require('../controllers/middlewares/product');
 const imgFunctions = require('../auxiliaries/imgHandler');
 const {editingRoles} = require('../data/roles');
 
 const router = express.Router();
 
 //routes
-router.route('/').get(productController.checkCatalogue, productController.catalogo);
+router.route('/').get(productMiddlewares.editorQueryAuth, productController.checkCatalogue, productController.catalogo);
 router.get('/existing/:id', productController.getProduct);
 
 router.use(authController.protect);

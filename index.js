@@ -92,14 +92,14 @@ app.use((err, req, res, next) => {
 
     return res.status(err.statusCode).json({
       status: err.statusCode.toString().startsWith("4") ? 'fail' : 'error',
-      message: messages,
+      message: messages.join(", "),
     });
   }
 
   // Para errores genéricos
   res.status(500).json({
     status: 'error',
-    errors: ['Something went wrong!'],
+    errors: 'Something went wrong!',
   });
 });
 
