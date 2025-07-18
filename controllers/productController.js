@@ -11,7 +11,7 @@ exports.checkCatalogue = catchAsync(async (req,res,next) => {
     delete req.query.showAll;
 
     if(showAll === 'true'){
-
+        //no hago nada
     }else if(showInactive === 'true'){
         req.query.isActive = 'false';
     }else{
@@ -30,7 +30,7 @@ exports.createProduct = catchAsync(async (req,res,next) => {
             return next(new AppError('product.createProduct.invalidStock',400));
         }
     }
-    req.fields.price = 'hola'
+    
     const price = parseFloat(req.fields.price)
     if(isNaN(price)) return next(new AppError('product.createProduct.invalidPrice', 400));
     const doc = await Product.create({

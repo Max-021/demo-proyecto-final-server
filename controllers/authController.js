@@ -26,7 +26,7 @@ const createSendToken = (user, statusCode, req, res) => {
     usa sameSite: 'none' y asegúrate de que la cookie sea secure. Si están en el mismo dominio, sameSite: 'strict' está bien. consejo de chatgpt */
     res.cookie('jwt', token, cookieOps);
     setTimeout(() => {
-        console.log('esperando');
+        console.log('esperando');//TEMPORAL; revisar esto, por qué lo hice?????
         
         res.status(statusCode).json({
             status: 'success',
@@ -354,7 +354,6 @@ exports.validatePasswordStatus = catchAsync(async (req,res,next) => {
     if(passwordValidation.isDerivedFromUser(password, {username, mail, firstName, lastName})) return next(new AppError('auth.validatePasswordStatus.derivedPassword', 400));
     if(passwordValidation.isWeakPassword(password)) return next(new AppError('auth.validatePasswordStatus.weakPassword', 400));
 
-    console.log('OK!')
     res.status(200).json({
         status: 'success',
         data: {message: 'Password is Ok!'},
