@@ -16,6 +16,8 @@ exports.createOne = (Model) => catchAsync(async (req, res, next) => {
 
 exports.getAll = (Model) => catchAsync(async (req,res,next) => {
     let filter = {}
+    console.log('getall')
+    console.log(req.query)
     if(req.params.id) filter = {item: req.params.id};
 
     const baseFeatures = new ApiFeat(Model.find(filter), req.query)
@@ -23,23 +25,14 @@ exports.getAll = (Model) => catchAsync(async (req,res,next) => {
         .sort()
         .limitFields();
 
-    const shouldPaginate = req.query.page != null || req.query.limit != null;
-    if(!shouldPaginate){
-        const docs = await baseFeatures.filteredModel;
-
-        return res.status(200).json({
-            status: 'success',
-            results: docs.length,
-            data: docs,
-        });
-    }
+    const totalFilteredCount = await Model.countDocuments(baseFeatures.filterObj);
 
     const page  = parseInt(req.query.page, 10)  || 1;
     const limit = parseInt(req.query.limit, 10) || 15;
-    const pageFeatures = new ApiFeat(Model.find(filter), req.query).filter().sort().limitFields().paginate();
+    const pageFeatures = new ApiFeat(Model.find(filter), req.query).sort().limitFields().paginate();
     const docs = await pageFeatures.filteredModel;
 
-    const totalCount = await baseFeatures.filteredModel.countDocuments();
+    const totalCount = await Model.countDocuments(filter)
 
     return res.status(200).json({
         status: 'success',
@@ -49,6 +42,7 @@ exports.getAll = (Model) => catchAsync(async (req,res,next) => {
             page: page,
             limit: limit,
             totalCount: totalCount,
+            totalFilteredCount: totalFilteredCount,
         }
     })
 })

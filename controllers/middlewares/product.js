@@ -15,7 +15,6 @@ function runMiddleware(req,res,fn) {//mover esta funcion a auxiliaries e importa
 exports.editorQueryAuth = catchAsync(async (req,res,next) => {
     const {showInactive, showAll} = req.query;
     const wantsEditorFilter = showAll === 'true' || showInactive === 'true';
-    console.log()
 
     if(!wantsEditorFilter) return next();
     console.log("reviso");

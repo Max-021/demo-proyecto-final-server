@@ -12,6 +12,7 @@ const router = express.Router();
 
 //routes
 router.route('/').get(productMiddlewares.editorQueryAuth, productController.checkCatalogue, productController.catalogo);
+router.post('/checkOrder', productController.checkOrder);
 router.get('/existing/:id', productController.getProduct);
 
 router.use(authController.protect);

@@ -6,6 +6,8 @@ const AppError = require('../auxiliaries/appError');
 
 exports.catalogo = functions.getAll(Product);
 exports.checkCatalogue = catchAsync(async (req,res,next) => {
+    console.log('del middleware')
+    console.log(req.query)
     const { showInactive, showAll } = req.query;
     delete req.query.showInactive;
     delete req.query.showAll;
@@ -247,3 +249,49 @@ exports.getOnlyOne = catchAsync(async (req,res,next) => {//para obtener el model
         data: modelDesc,
     })
 })
+
+exports.checkOrder = catchAsync(async (req,res,next) => {
+    const orderItems = req.body;
+    const ids = orderItems.map(item => item._id);
+    const products = await Product.find({ _id: {$in: ids} });
+
+    const limitsExceded = [];
+
+    orderItems.forEach(item => {
+        const prodDoc = products.find(p => p._id.equals(item._id));
+        if(!prodDoc){
+            limitsExceded.push({
+                _id: item.id,
+                color: item.color,
+                error: 'Producto no encontrado',
+            });
+            return;
+        }
+
+        item.stock.forEach(({color, quantity}) => {
+            const stockEntry = prodDoc.stock.find(s => s.color === color);
+            const available = stockEntry ? stockEntry.quantity : 0;
+
+            if(quantity > available) {
+                limitsExceded.push({
+                    _id: item._id,
+                    color,
+                    requested: quantity,
+                    available,
+                });
+            }
+        });
+    });
+
+    if(limitsExceded.length > 0) {
+        return res.status(200).json({
+            status:'true',
+            data: { limitsExceded },
+        });
+    }
+
+    res.status(200).json({
+        status: 'success',
+        data: { limitsExceded },
+    });
+});
