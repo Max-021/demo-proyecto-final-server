@@ -130,15 +130,45 @@ exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta 
 }
 
 exports.login = catchAsync(async (req,res,next) => {
-    const {mail,password} = req.body;
-    mail.trim();
-    password.trim();
+    let {mail,password} = req.body;
+    mail = mail.trim();
+    password = password.trim();
 
     if(!mail || !password) return next(new AppError('auth.login.missingData',400));
 
     const user = await User.findOne({mail}).select("+password");
+
+    if(user.lockUntil && user.lockUntil > Date.now()){
+        const diffMs = user.lockUntil - Date.now();
+        const minutes = Math.floor(diffMs / 60000);
+        const seconds = Math.floor((diffMs % 60000) / 1000);
+        const remainingTime = `${minutes} minuto${minutes !== 1 ? 's' : ''} ${seconds} segundo${seconds !== 1 ? 's' : ''}`;
+        return next(new AppError('auth.login.accountLocked', 423, {remainingTime}, {
+            captchaRequired: true,
+        }));
+    }
     
-    if(!user || !(await user.correctPassword(password, user.password))) return next(new AppError('auth.login.incorrectData',401));
+    if(!user) return next(new AppError('auth.login.noUser', 401))
+    if(!(await user.correctPassword(password, user.password))) {
+        if(user.lastLoginAttemptTime && ((Date.now() - user.lastLoginAttemptTime) > (60*60*1000))) {
+            user.loginAttempts = 0;
+            user.captchaRequired = false;
+        }
+        user.loginAttempts++;
+        user.lastLoginAttemptTime = Date.now();
+
+        if(user.loginAttempts === 5) {
+            user.captchaRequired = true;
+            user.lockUntil = Date.now() + 5*60*1000;
+        }
+        if(user.loginAttempts >= 10) {
+            user.lockUntil = Date.now() + 30*60*1000;
+        }
+        await user.save({validateBeforeSave: false});
+        return next(new AppError('auth.login.incorrectData', 429, {}, {
+            captchaRequired: user.captchaRequired,
+        }))
+    }
 
     if(user.status === 'suspended') return next(new AppError(`auth.login.userSuspended`, 403));
     
@@ -147,6 +177,10 @@ exports.login = catchAsync(async (req,res,next) => {
         await new Email(user, '').userActivation();
     }
 
+    user.loginAttempts = 0;
+    user.lastLoginAttemptTime = undefined;
+    user.lockUntil = undefined;
+    user.captchaRequired = false;
     user.lastLogin = Date.now();
     user.lastLoginIp = req.ip;
     user.save({validateBeforeSave: false}).catch(console.error);

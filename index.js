@@ -20,6 +20,7 @@ const productRouter = require('./routes/product');
 const enumFieldsRouter = require('./routes/enumFields');
 const userRouter = require('./routes/user');
 const userBasicsRouter = require('./routes/userBasics');
+const captchaRouter = require('./routes/captcha');
 
 //IMPORTANTE, temporal, revisar como poner esto y tambien ver como lo protejo y si lo pongo en .env,
 const allowedOrigins = ['http://localhost:3000', 'https://shoptemplateserver.onrender.com','https://shoptest-blue.vercel.app','https://shoptest-git-main-max021s-projects.vercel.app','https://shoptest-max021s-projects.vercel.app'];
@@ -31,7 +32,7 @@ const app = express();
 app.use(helmet());
 //temporal, revisar documentacion sobre que era morgan
 if(process.env.NODE_ENV === 'development') {
-    app.use(morgan);
+    app.use(morgan('dev'));
 }
 
 const tryLimit = process.env.NODE_ENV === 'production' ? 10 : 100;
@@ -80,6 +81,7 @@ app.use(`${apiUrl}/userBasics`, userBasicsRouter);
 app.use(`${apiUrl}/user`, userRouter);
 app.use(`${apiUrl}/products`, productRouter);
 app.use(`${apiUrl}/enumFields`,enumFieldsRouter);
+app.use(`${apiUrl}/captcha`, captchaRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -93,6 +95,7 @@ app.use((err, req, res, next) => {
     return res.status(err.statusCode).json({
       status: err.statusCode.toString().startsWith("4") ? 'fail' : 'error',
       message: messages.join(", "),
+      data: err.toClient,
     });
   }
 

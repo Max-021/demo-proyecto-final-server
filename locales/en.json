@@ -13,7 +13,9 @@
         "login": {
             "missingData": "Please provide email and/or password.",
             "incorrectData": "Incorrect email or password.",
-            "userSuspended": "This account is suspended. You can't login while in this condition."
+            "noUser": "The user does not exist.",
+            "userSuspended": "This account is suspended. You can't login while in this condition.",
+            "accountLocked": "After many failed login attemps the account has been locked, \"{{remainingTime}}\" remaining until you can try again."
         },
         "protect": {
             "noToken": "To perform this action you must have logged in.",
@@ -127,6 +129,17 @@
     "imgHandler": {
         "uploadImages": {
             "formatNotAllowed": "Only images allowed, \"{{filename}}\" is not a valid image"
+        }
+    },
+    "captchaVerification": {
+        "postVerif": {
+            "noToken": "Missing Turnstile token.",
+            "failedVerif": "Captcha validation failed.",
+            "successVerif": "Captcha validation successful."
+        },
+        "conditionalLoginCaptcha": {
+            "noToken": "Missing Turnstile token.",
+            "failedVerif": "Captcha validation failed."
         }
     }
 }

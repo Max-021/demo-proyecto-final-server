@@ -13,7 +13,9 @@
         "login": {
             "missingData": "Por favor provea un email y/o contraseña.",
             "incorrectData": "Email o contraseña incorrectos.",
-            "userSuspended": "Esta cuenta está suspendida. No puedes iniciar sesión en esta condición."
+            "noUser": "El usuario no existe.",
+            "userSuspended": "Esta cuenta está suspendida. No puedes iniciar sesión en esta condición.",
+            "accountLocked": "Después de varios intentos fallidos, la cuenta se ha bloqueado, \"{{remainingTime}}\" restantes para volver a intentarlo."
         },
         "protect": {
             "noToken": "Para realizar esta acción debes haber iniciado sesión.",
@@ -127,6 +129,17 @@
     "imgHandler": {
         "uploadImages": {
             "formatNotAllowed": "Solo imágenes permitidas, \"{{filename}}\" no es una imagen válida."
+        }
+    },
+    "captchaVerification": {
+        "postVerif": {
+            "noToken": "Falta el token de Turnstile.",
+            "failedVerif": "Validación del captcha fallida.",
+            "successVerif": "Validación del captcha exitosa."
+        },
+        "conditionalLoginCaptcha": {
+            "noToken": "Falta el token de Turnstile.",
+            "failedVerif": "Validación del captcha fallida."
         }
     }
 }

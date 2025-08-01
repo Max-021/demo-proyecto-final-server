@@ -67,6 +67,17 @@ const userSchema = new mongoose.Schema({
         enum: enumStatus,
         default: 'active',
     },
+    loginAttempts: {
+        type: Number,
+        required: true,
+        default: 0,
+    },
+    lastLoginAttemptTime: Date,
+    lockUntil: Date,
+    captchaRequired: {
+        type: Boolean,
+        default: false,
+    },
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,

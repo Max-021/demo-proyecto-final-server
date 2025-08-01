@@ -75,6 +75,9 @@ Las funciones principales del controlador de autenticacion son las de proteger y
 
 Esto es para que no sea un problema a la hora de los request del lado cliente para mostrar las opciones disponibles antes de mandar el documento a crear en la base de datos
 
+##Captcha routes
+Las funciones de las rutas del captcha están hechas dentro del mismo router
+
 ##En controladores
 todas las respuestas deben seguir el formato:
 res.status(num).json({
