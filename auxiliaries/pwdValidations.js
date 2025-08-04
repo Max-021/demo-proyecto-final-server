@@ -11,7 +11,6 @@ try {
       .map(pwd => pwd.trim().toLowerCase())
       .filter(Boolean)         // elimina líneas vacías
   );
-  console.log(`Cargadas ${topWeakPasswords.size} contraseñas débiles.`);
 } catch (err) {
   console.error('Error cargando topWeakPasswords:', err);
 }

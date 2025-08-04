@@ -36,7 +36,6 @@ const createSendToken = (user, statusCode, req, res) => {
 }
 
 //aca van todas las funciones referidas a la sesion de usuario y a la creacion de usuarios
-//la funcion de crear usuario, como es una funcion critica la desarrollo directamente, sin pasar por un factory o alguna otra cosa
 exports.signup = catchAsync(async (req,res,next) => {
     const newUser = await User.create({
         username: req.body.username,
@@ -98,12 +97,10 @@ exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta 
         const cookieOps = {httpOnly: true, secure: true, sameSite: 'none'};
 
         if(!freshUser){
-            console.log('fresh user not')
             res.clearCookie('jwt', cookieOps);
             return next(new AppError("auth.alreadyLoggedIn.noUser", 401));
         }
-        if(await freshUser.changedPasswordAfter(decoded.iat)){
-            console.log('changed password')
+        if(await freshUser.changedPasswordAfter(decoded.iat)){//changed password
             res.clearCookie('jwt', cookieOps);
             return next(new AppError("auth.alreadyLoggedIn.passwordChangedRecently", 401));
         }
@@ -200,15 +197,11 @@ exports.logout = catchAsync(async (req,res) => {
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
-    console.log("Protect ejecutado en: "+req.originalUrl);
-
     let token;
 
     if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")){
         token = req.headers.authorization.split(" ")[1];
-        console.log('por headers')
     }else if(req.cookies.jwt){
-        console.log('por COOKIES jwt')
         token = req.cookies.jwt;
     }
 
@@ -225,7 +218,6 @@ exports.protect = catchAsync(async (req, res, next) => {
     // if(freshUser.changedPasswordAfter(decoded.iat)){
     //     return next(new AppError('auth.protect.passwordChangedRecently',401))
     // }
-    console.log("viene bien")
     req.user = freshUser;
     // req.locals.user = freshUser;//temporal, revisar porque dice que no existe
     next();
@@ -240,7 +232,7 @@ exports.restrict = (...roles) => {
 
 exports.getUserInfo = catchAsync(async (req,res,next) =>{
 
-    const fieldsNeeded = 'username mail role firstName lastName'//temporal, ver si muevo esto a un mejor lugar y tambien revisar la adaptabilidad a más/distintos campos de esta configuracion
+    const fieldsNeeded = 'username mail role firstName lastName'
     //para que funcione de manera mas óptima
     if(req.cookies.jwt){
         const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
@@ -268,8 +260,6 @@ exports.passwordForgotten = catchAsync(async (req, res, next) => {
     const baseUrl = process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL?.trim() : process.env.DEV_URL?.trim();
     const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
     try {
-        console.log(user)
-        console.log(resetUrl)
         await new Email(user, resetUrl).passwordReset();
     } catch (error) {
         console.error(error)
@@ -280,7 +270,6 @@ exports.passwordForgotten = catchAsync(async (req, res, next) => {
         return next(new AppError('auth.passwordForgotten.emailSendError', 500));
     }
 
-    console.log(resetUrl)
     res.status(202).json({
         status: 'success',
         data: {
@@ -383,7 +372,6 @@ exports.validatePasswordRules = catchAsync(async (req,res,next) => {//es un midd
 exports.validatePasswordStatus = catchAsync(async (req,res,next) => {
     const {password} = req.body;
     const {username, mail, firstName, lastName} = req.user;
-    console.log(password)
 
     if(passwordValidation.isDerivedFromUser(password, {username, mail, firstName, lastName})) return next(new AppError('auth.validatePasswordStatus.derivedPassword', 400));
     if(passwordValidation.isWeakPassword(password)) return next(new AppError('auth.validatePasswordStatus.weakPassword', 400));

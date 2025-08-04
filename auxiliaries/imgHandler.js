@@ -78,15 +78,10 @@ exports.uploadImages = catchAsync(async (req, res, next) => {
 
 
 exports.deleteImages = catchAsync(async (req, res, next) => {
-  // 0) Log para depurar qué llega
-  console.log('deleteImages - raw removedImages:', req.fields.removedImages);
-
-  // 1) Si no hay campo, salgo inmediatamente
   if (!req.fields.removedImages) {
     return next();
   }
 
-  // 2) Intento parsear el JSON enviado
   let toRemove;
   try {
     toRemove = JSON.parse(req.fields.removedImages);
@@ -95,28 +90,22 @@ exports.deleteImages = catchAsync(async (req, res, next) => {
     return next();
   }
 
-  // 3) Verifico que sea un array no vacío
   if (!Array.isArray(toRemove) || toRemove.length === 0) {
     return next();
   }
 
-  // 4) Extraigo de cada URL el public_id que Cloudinary necesita
   const publicIds = toRemove.map(url => {
     const after = (url.split('/upload/')[1] || '');
     const noVersion = after.replace(/^v\d+\//, '');
     return noVersion.replace(/\.[^/.]+$/, '');
   });
 
-  // 5) Llamo a la API de Cloudinary para borrarlas
   try {
     await cloudinary.api.delete_resources(publicIds, { resource_type: 'image' });
-    console.log('Cloudinary deleted images', publicIds);
   } catch (err) {
-    console.error('deleteImages - Cloudinary error:', err);
     // Si quieres que falle la petición en este punto, usa:
     // return next(err);
   }
 
-  // 6) Finalmente, continúo al siguiente middleware
   return next();
 });

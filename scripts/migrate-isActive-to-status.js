@@ -21,7 +21,6 @@ async function run() {
         }
         
     )
-    console.log(`✅ Documentos actualizados a 'active': ${res1.modifiedCount}`);
     await mongoose.disconnect();
 }
 

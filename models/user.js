@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
         validate: [validator.isEmail, 'Please use a valid email']
     },
     password: {
-        type: String,//temporal, revisar, tengo que ver que medidas de seguridad pongo aca + tambien ver otros lugares para proteger
+        type: String,
         minlength: 12,
         required: [function() { return !this.passwordResetToken; }, 'A user must have a password.'],
         validate: {
@@ -87,7 +87,6 @@ const userSchema = new mongoose.Schema({
 })
 
 userSchema.pre('save',async function (next) {
-    //temporal, revisar la documentacion de bcrypt para saber como mejorar esto, en el github tienen mejores datos
     if(!this.isModified('password') || typeof this.password !== 'string') return next();
     this.password = await bcrypt.hash(this.password, salt);
     next();

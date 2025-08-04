@@ -13,8 +13,7 @@ router.use(authController.protect);
 router.use(authController.restrict(...editingRoles));
 
 router.route('/')
-    .get(enumFieldsController.getAllFields)
-    // .post(enumFieldsController.createEnumField);//temporal, terminar la funcion para agregar estos documentos, va atado al modelo de productos
+    .get(enumFieldsController.getAllFields);
 
 router.route('/:id')
     .get(enumFieldsController.getEnumField)

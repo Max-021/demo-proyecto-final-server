@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get('/checkSession',authController.alreadyLoggedIn);
 router.get('/logout',authController.logout);
-router.post('/signup',authController.signup);//temporal, agregar en la funcion signup el controlador de autenticacion para que solo el administrador pueda agregar cuentas
+router.post('/signup',authController.signup);
 router.post('/login', captchaMiddlewares.conditionalLoginCaptcha, authController.login);
 router.post('/passwordForgotten',authController.passwordForgotten);
 router.patch('/retryPassword',authController.retryPassword);

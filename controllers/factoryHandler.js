@@ -3,7 +3,6 @@ const AppError = require('../auxiliaries/appError');
 const ApiFeat = require('../auxiliaries/apiFeat');
 const helpers = require('../auxiliaries/helpers');
 
-//revisar, temporal
 //revisar que cuando se creen no se creen duplicados de los ya existentes, ver si lo puedo dejar como una validacion opcional
 exports.createOne = (Model) => catchAsync(async (req, res, next) => {
     const doc = await Model.create(req.body);
@@ -16,8 +15,6 @@ exports.createOne = (Model) => catchAsync(async (req, res, next) => {
 
 exports.getAll = (Model) => catchAsync(async (req,res,next) => {
     let filter = {}
-    console.log('getall')
-    console.log(req.query)
     if(req.params.id) filter = {item: req.params.id};
 
     const baseFeatures = new ApiFeat(Model.find(filter), req.query)
@@ -47,15 +44,11 @@ exports.getAll = (Model) => catchAsync(async (req,res,next) => {
     })
 })
 
-//revisar, temporal
 exports.getOne = (Model,popOps) => catchAsync(async (req,res,next) => {
-    //completar
-    console.log("Por aca")
     let query = Model.findById(req.params.id)
     if(popOps) query = query.populate(popOps);
     const doc = await query;
     
-    //404
     if(!doc) return next(new AppError("factoryHandler.noDocument",404))
 
     return res.status(200).json({
@@ -64,7 +57,6 @@ exports.getOne = (Model,popOps) => catchAsync(async (req,res,next) => {
     });
 });
 
-//revisar, temporal
 exports.deleteOne = (Model) => catchAsync(async (req,res,next) => {
     const doc = await Model.findByIdAndDelete(req.params.id);
 

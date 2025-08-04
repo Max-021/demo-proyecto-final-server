@@ -27,6 +27,6 @@ router.patch('/changedStockField', productController.updateFromStockEnumField);
 
 router.route('/existing/:id')
     .patch(formidableMiddleware({multiples: true}), imgFunctions.deleteImages, imgFunctions.uploadImages, productController.updateProduct)
-    .delete(productController.deleteProduct);//temporal, revisar si hacer algo especial por el tema de las imagenes
+    .delete(productController.deleteProduct);
 
 module.exports = router;

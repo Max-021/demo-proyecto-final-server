@@ -17,7 +17,6 @@ exports.editorQueryAuth = catchAsync(async (req,res,next) => {
     const wantsEditorFilter = showAll === 'true' || showInactive === 'true';
 
     if(!wantsEditorFilter) return next();
-    console.log("reviso");
 
     await runMiddleware(req,res, authController.protect);
     await runMiddleware(req,res, authController.restrict(...editingRoles));

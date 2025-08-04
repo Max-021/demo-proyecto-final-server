@@ -6,8 +6,6 @@ const AppError = require('../auxiliaries/appError');
 
 exports.catalogo = functions.getAll(Product);
 exports.checkCatalogue = catchAsync(async (req,res,next) => {
-    console.log('del middleware')
-    console.log(req.query)
     const { showInactive, showAll } = req.query;
     delete req.query.showInactive;
     delete req.query.showAll;
@@ -22,7 +20,6 @@ exports.checkCatalogue = catchAsync(async (req,res,next) => {
     next();
 });
 
-//revisar que cuando se creen no se creen duplicados de los ya existentes, ver si lo puedo dejar como una validacion opcional/ temporal
 exports.createProduct = catchAsync(async (req,res,next) => {
     let newStock = [];
     if(req.fields.stock){
@@ -42,7 +39,6 @@ exports.createProduct = catchAsync(async (req,res,next) => {
         price: price,
         stock: newStock,
         img: req.fields.img,
-        // status: 'normal',//comentado temporalmente porque esta pensado para mejoras futuras
         isActive: req.fields.isActive === 'true' || req.fields.isActive === true,
     });
     res.status(201).json({
@@ -66,7 +62,6 @@ exports.updateFromSingleEnumField = catchAsync(async (req,res,next) => {
     })
 })
 exports.updateFromArrayEnumField = catchAsync(async (req, res, next) => {
-    console.log(req.body);
     const {newInfo, oldInfo, fieldName} = req.body;
 
     if(!oldInfo)            return next(new AppError('product.updateFromArrayEnumField.missingOldValue', 400));

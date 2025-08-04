@@ -107,10 +107,7 @@ app.use((err, req, res, next) => {
 });
 
 app.all('*', (req, res, next) => {
-    console.log(req.originalUrl)
-    next(
-        new AppError(`${req.originalUrl} can't be found on the server`, 404)
-    )
+    next(new AppError(`${req.originalUrl} can't be found on the server`, 404));
 })
 
 module.exports = app;

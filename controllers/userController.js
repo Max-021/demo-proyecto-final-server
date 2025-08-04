@@ -46,7 +46,6 @@ exports.deactivateMe = catchAsync(async (req,res,next) => {
         data: null,
     });
 })
-//temporal, revisar funcion getMe y que hace en mi 3dprintsApi
 exports.getMe = (req, res, next) => {
     req.params.id = req.user._id;
     next();
@@ -61,7 +60,6 @@ exports.getRoles = catchAsync(async (req,res,next) =>{
 })
 
 exports.toggleSuspension = catchAsync(async (req,res,next) => {
-    console.log(req.body)//temporal, fijarse de poder recibir y enviar por mail un motivo de suspensión
     const { _id, status } = req.body;
     if (! _id || ! status) return next(new AppError('user.toggleSuspension.missingFields', 400));
 
@@ -89,7 +87,6 @@ exports.toggleSuspension = catchAsync(async (req,res,next) => {
 })
 
 exports.changeUserRole = catchAsync(async (req,res,next) => {
-    console.log(req.body)
     if(!req.body._id) return next(new AppError('user.changeUserRole.missingFields',400));
     
     const updatedUser = await User.findByIdAndUpdate(req.body._id, {role: req.body.role}, {new: true})

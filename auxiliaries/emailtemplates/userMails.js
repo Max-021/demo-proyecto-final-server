@@ -46,4 +46,4 @@ exports.userRoleUpdated = (role) => /*html*/`
     <p>El rol de tu usuario ha sido actualizado.</p>
     <p>Su nuevo rol es: ${role}</p>
     <br/>
-`;//temporal, ver si agrego un: cualquier duda consultar con el administrador del sitio. o algo parecido
+`;

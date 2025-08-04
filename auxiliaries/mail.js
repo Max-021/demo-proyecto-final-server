@@ -54,14 +54,8 @@ module.exports = class Email {
             html: html || fallbackBody,
             text: htmlToText(html)
         }
-        // console.log(mailOptions)
         const transporter = await this.newTransport();
         const info = await transporter.sendMail(mailOptions);
-
-        if(process.env.NODE_ENV !== 'production'){
-            console.log("mensaje enviado:"+info.messageId);
-            console.log("vprev"+nodemailer.getTestMessageUrl(info));
-        }
     }
     /**
      * Envía un correo de bienvenida para que el usuario establezca su contraseña.
@@ -74,7 +68,7 @@ module.exports = class Email {
 
     }
     async passwordReset() {
-        await this.send('Recuperación de contraseña', userMail.passwordRetrieved(this.url))//temporal, revisar esta parte en conjunto con los otros temas del authController
+        await this.send('Recuperación de contraseña', userMail.passwordRetrieved(this.url))
     }
     async userDeactivation() {
         await this.send('Usuario desactivado', userMail.userDeactivated());
