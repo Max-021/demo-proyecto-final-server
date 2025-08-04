@@ -14,25 +14,18 @@ const createSendToken = (user, statusCode, req, res) => {
     const token = signToken(user.id);
 
     const cookieOps = {
-        expires: new Date( Date.now() + process.env.JWT_COOKIE_EXP * 24 * 60 * 60 * 1000),
+        expires: new Date(Date.now() + process.env.JWT_COOKIE_EXP * 24 * 60 * 60 * 1000),
         httpOnly: true,
-        // secure: process.env.NODE_ENV === 'production' ? (req.secure || req.headers['x-forwarded-proto'] === 'https') : false,
         secure: true,
-        // sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Protección contra CSRF, temporal-----------revisar si poner 'strict' o 'lax'//temporal, solo para test en render
-        sameSite: 'none', // Protección contra CSRF, temporal-----------revisar si poner 'strict' o 'lax'//temporal, solo para test en render
+        sameSite: 'none',
         path: '/',
     };
-    /*Evalúa sameSite dinámico según tus necesidades: Si tu cliente y servidor están en diferentes dominios (frontend y backend separados), 
-    usa sameSite: 'none' y asegúrate de que la cookie sea secure. Si están en el mismo dominio, sameSite: 'strict' está bien. consejo de chatgpt */
+
     res.cookie('jwt', token, cookieOps);
-    setTimeout(() => {
-        console.log('esperando');//TEMPORAL; revisar esto, por qué lo hice?????
-        
-        res.status(statusCode).json({
-            status: 'success',
-            data:{ user: user._id, name: user.username, },
-        });
-    }, 5000);
+    return res.status(statusCode).json({
+        status: 'success',
+        data:{ user: user._id, name: user.username, },
+    });
 }
 
 //aca van todas las funciones referidas a la sesion de usuario y a la creacion de usuarios
@@ -48,10 +41,10 @@ exports.signup = catchAsync(async (req,res,next) => {
         lastLoginIp: req.ip,
     });
     const url = `${req.protocol}://${req.get("host")}/me`//revisar esto de la ruta que coincida con la pagina cliente y que la direccion sea de los datos del usuario, temporal
-    //envio mail de bienvenida y confirmacion
-    await new Email(newUser,url).welcome();//temporal, revisar y completar la clase de mail
+
+    await new Email(newUser,url).welcome();
     
-    createSendToken(newUser, 201, req, res);//esto siempre al final por el res.status de la funcion
+    createSendToken(newUser, 201, req, res);
 })
 exports.createUser = catchAsync(async (req,res,next) => {
     const newUser = new User({
@@ -81,7 +74,7 @@ exports.createUser = catchAsync(async (req,res,next) => {
     })
 })
 
-exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta funcion
+exports.alreadyLoggedIn = async (req, res, next) => {
     if(!(req.cookies.jwt)){
         return res.status(200).json({
             status: 'success',
@@ -100,7 +93,7 @@ exports.alreadyLoggedIn = async (req, res, next) => {//revisar utilidad de esta 
             res.clearCookie('jwt', cookieOps);
             return next(new AppError("auth.alreadyLoggedIn.noUser", 401));
         }
-        if(await freshUser.changedPasswordAfter(decoded.iat)){//changed password
+        if(await freshUser.changedPasswordAfter(decoded.iat)){
             res.clearCookie('jwt', cookieOps);
             return next(new AppError("auth.alreadyLoggedIn.passwordChangedRecently", 401));
         }
@@ -207,7 +200,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
     if(!token) return next(new AppError('auth.protect.noToken', 401));
 
-    //verifico el token
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
     const freshUser = await User.findById(decoded.id)
@@ -215,11 +207,9 @@ exports.protect = catchAsync(async (req, res, next) => {
     if(!freshUser) return next(new AppError("auth.protect.noUser",401));
 
     //temporal, funcion comentada porque se supone que no funciona como deberia, corregir, también reveer pertinencia de dar este tipo de informacion
-    // if(freshUser.changedPasswordAfter(decoded.iat)){
-    //     return next(new AppError('auth.protect.passwordChangedRecently',401))
-    // }
+    if(freshUser.changedPasswordAfter(decoded.iat)) return next(new AppError('auth.protect.passwordChangedRecently',401))
     req.user = freshUser;
-    // req.locals.user = freshUser;//temporal, revisar porque dice que no existe
+
     next();
 })
 
@@ -319,12 +309,11 @@ exports.retryPassword = catchAsync(async (req, res, next) => {
     }
 
     user.password = req.body.password;
-    // user.confPassword = req.body.confPassword;//revisar la importancia de esto, el campo no existe en el modelo
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
 
-    createSendToken(user, 200, req, res);//revisar porqué solo res
+    createSendToken(user, 200, req, res);
 })
 
 exports.updatePassword = catchAsync(async (req, res, next) => {

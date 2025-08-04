@@ -9,7 +9,7 @@ router.use(authController.protect);
 
 //protected routes
 router.get('/userInfo/:id', authController.restrictToSelf, authController.getUserInfo);
-router.patch('/newPassword',authController.retryPassword);
+// router.patch('/newPassword',authController.retryPassword);
 router.patch('/updateMe/:id', authController.restrictToSelf, userController.updateUser);
 router.patch('/deactivateMe/:id', authController.restrictToSelf, userController.deactivateMe);
 router.delete('/deleteMe/:id',authController.restrictToSelf, userController.deleteUser);

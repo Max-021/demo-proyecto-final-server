@@ -11,7 +11,7 @@ router.get('/logout',authController.logout);
 router.post('/signup',authController.signup);
 router.post('/login', captchaMiddlewares.conditionalLoginCaptcha, authController.login);
 router.post('/passwordForgotten',authController.passwordForgotten);
-router.patch('/retryPassword',authController.retryPassword);
+// router.patch('/retryPassword',authController.retryPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 router.get('/validateResetToken/:token', authController.validateResetToken);
 
