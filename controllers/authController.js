@@ -206,7 +206,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
     if(!freshUser) return next(new AppError("auth.protect.noUser",401));
 
-    //temporal, funcion comentada porque se supone que no funciona como deberia, corregir, también reveer pertinencia de dar este tipo de informacion
     if(freshUser.changedPasswordAfter(decoded.iat)) return next(new AppError('auth.protect.passwordChangedRecently',401))
     req.user = freshUser;
 

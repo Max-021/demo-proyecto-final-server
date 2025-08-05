@@ -10,7 +10,6 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
-const formidableMiddleware = require('express-formidable');
 const i18next = require('i18next');
 const i18Backend = require('i18next-fs-backend');
 const {LanguageDetector, handle} = require('i18next-http-middleware');
@@ -22,42 +21,67 @@ const userRouter = require('./routes/user');
 const userBasicsRouter = require('./routes/userBasics');
 const captchaRouter = require('./routes/captcha');
 
-//IMPORTANTE, temporal, revisar como poner esto y tambien ver como lo protejo y si lo pongo en .env,
-const allowedOrigins = ['http://localhost:3000', 'https://shoptemplateserver.onrender.com','https://shoptest-blue.vercel.app','https://shoptest-git-main-max021s-projects.vercel.app','https://shoptest-max021s-projects.vercel.app'];
-
 const app = express();
 
-//middlewares
-//temporal, reviar todos los middlewares, helmet, morgan, limiter, mongoSanitize, xss, hpp, cookieparser y para que era express.json .urlencoded
 app.use(helmet());
-//temporal, revisar documentacion sobre que era morgan
+app.use(compression());
 if(process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
+  app.use(morgan('dev'));
 }
 
-const tryLimit = process.env.NODE_ENV === 'production' ? 10 : 100;
-const limiter = rateLimit({max:tryLimit,windowsMs:60 * 60 * 1000,message: 'Too many tries from this ip, try again later'});
-app.use('/api',limiter);
+const READ_MAX = process.env.NODE_ENV === 'production' ? 1200 : 100;
+const WRITE_MAX = process.env.NODE_ENV === 'production' ? 200 : 50;
+const readLimiter = rateLimit({
+  windowMs:60 * 60 * 1000,
+  max:READ_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).set('Retry-After', Math.ceil(3600).toString()).json({
+        status: 'fail',
+        message: req.t('rateLimit.readExceeded'),
+      });
+  },
+});
+const writeLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000,
+  max: WRITE_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).set('Retry-After', Math.ceil(30 * 60).toString()).json({
+        status: 'fail',
+        message: req.t('rateLimit.writeExceeded'),
+      });
+  },
+});
+app.set('trust proxy', 1);
+
+app.use('/api', (req, res, next) => {
+  if (['GET', 'HEAD'].includes(req.method)) {
+    return readLimiter(req, res, next);
+  }
+  return writeLimiter(req, res, next);
+});
 
 app.use(express.json({limit: '10kb'}));
 app.use(express.urlencoded({extended: true,limit:'10kb'}));
+
 app.use(cookieParser());
-// app.use(formidableMiddleware({multiples:true}));//desactivado porque lo uso solo en el lugar que lo necesito
 
 app.use(cors({
-    origin: allowedOrigins,
-    credentials: true,
+  origin: process.env.ALLOWED_ORIGINS.split(','),
+  credentials: true,
 }));
+
 app.use(mongoSanitize());
 app.use(xss());
-//temporal, revisar que era hpp
-// app.use(
-//     hpp({
-//         whitelist:[],//agregar los campos que considere ej: 'name'
-//     })
-// );
+app.use(
+    hpp({
+        whitelist:[],//agregar los campos que considere ej: 'name'
+    })
+);
 
-//para soporte de idiomas
 i18next
   .use(i18Backend)
   .use(LanguageDetector)
@@ -73,7 +97,7 @@ i18next
   });
 app.use(handle(i18next));
 
-//reviar el tema puertos para el deploy, temporal
+//revisar el tema puertos para el deploy, temporal
 
 const apiUrl = `/api/v1`
 
@@ -99,7 +123,6 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Para errores genéricos
   res.status(500).json({
     status: 'error',
     errors: 'Something went wrong!',
@@ -107,7 +130,7 @@ app.use((err, req, res, next) => {
 });
 
 app.all('*', (req, res, next) => {
-    next(new AppError(`${req.originalUrl} can't be found on the server`, 404));
+  next(new AppError(`${req.originalUrl} can't be found on the server`, 404));
 })
 
 module.exports = app;

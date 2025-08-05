@@ -141,5 +141,9 @@
             "noToken": "Falta el token de Turnstile.",
             "failedVerif": "Validación del captcha fallida."
         }
+    },
+    "rateLimit": {
+        "readExceeded":"Demasiados intentos, vuelva a intentar más tarde.",
+        "writeExceeded": "Demasiados intentos, vuelva a intentar más tarde."
     }
 }

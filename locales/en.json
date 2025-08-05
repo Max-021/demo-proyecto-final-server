@@ -141,5 +141,9 @@
             "noToken": "Missing Turnstile token.",
             "failedVerif": "Captcha validation failed."
         }
+    },
+    "rateLimit": {
+        "readExceeded":"Too many requests, try again later.",
+        "writeExceeded": "Too many requests, try again later."
     }
 }
