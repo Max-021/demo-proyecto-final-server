@@ -263,7 +263,7 @@ exports.passwordForgotten = catchAsync(async (req, res, next) => {
         status: 'success',
         data: {
             message: 'Token sent via email',
-            ...(process.env.NODE_ENV !== 'production' && {resetUrl}),
+            url: resetUrl,
         }
     });
 })
