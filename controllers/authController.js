@@ -246,7 +246,12 @@ exports.passwordForgotten = catchAsync(async (req, res, next) => {
     const resetToken = user.createPasswordResetToken();
     await user.save({validateBeforeSave: false});
 
-    const baseUrl = process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL?.trim() : process.env.DEV_URL?.trim();
+    const envUrl = process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL : process.env.DEV_URL;
+    const trimmedEnvUrl = envUrl?.trim();
+    const fallbackUrl = `${req.protocol}://${req.get("host")}`;
+
+    const baseUrl = trimmedEnvUrl && /^https?:\/\//.test(trimmedEnvUrl) ? trimmedEnvUrl : fallbackUrl;
+
     const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
     try {
         await new Email(user, resetUrl).passwordReset();
