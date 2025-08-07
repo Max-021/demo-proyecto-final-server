@@ -99,13 +99,22 @@ app.use(handle(i18next));
 
 //revisar el tema puertos para el deploy, temporal
 
-const apiUrl = `/api/v1`
+const apiUrl = `/api/v1/`
 
-app.use(`${apiUrl}/userBasics`, userBasicsRouter);
-app.use(`${apiUrl}/user`, userRouter);
-app.use(`${apiUrl}/products`, productRouter);
-app.use(`${apiUrl}/enumFields`,enumFieldsRouter);
-app.use(`${apiUrl}/captcha`, captchaRouter);
+app.use(`${apiUrl}userBasics`, userBasicsRouter);
+app.use(`${apiUrl}user`, userRouter);
+app.use(`${apiUrl}products`, productRouter);
+app.use(`${apiUrl}enumFields`,enumFieldsRouter);
+app.use(`${apiUrl}captcha`, captchaRouter);
+
+//chequeo basico
+app.get(`${apiUrl}healthcheck`, (req,res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'OK',
+    data: {},
+  })
+})
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
