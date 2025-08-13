@@ -5,6 +5,8 @@ const authController = require('../controllers/authController');
 
 const router = express.Router();
 
+router.post('/password/validate', authController.validatePasswordStatus);
+
 router.use(authController.protect);
 
 //protected routes
@@ -14,7 +16,6 @@ router.patch('/updateMe/:id', authController.restrictToSelf, userController.upda
 router.patch('/deactivateMe/:id', authController.restrictToSelf, userController.deactivateMe);
 router.delete('/deleteMe/:id',authController.restrictToSelf, userController.deleteUser);
 router.patch('/changePassword', authController.updatePassword);
-router.post('/password/validate', authController.validatePasswordStatus);
 
 router.use(authController.restrict('admin'));
 
