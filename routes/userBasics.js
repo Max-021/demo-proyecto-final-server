@@ -14,6 +14,7 @@ router.post('/passwordForgotten',authController.passwordForgotten);
 // router.patch('/retryPassword',authController.retryPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 router.get('/validateResetToken/:token', authController.validateResetToken);
+router.post('/passwordReset/validate/:token', authController.validateRulesPasswordReset)
 
 
 module.exports = router;

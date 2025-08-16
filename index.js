@@ -23,14 +23,29 @@ const captchaRouter = require('./routes/captcha');
 
 const app = express();
 
+i18next
+  .use(i18Backend)
+  .use(LanguageDetector)
+  .init({
+    fallbackLng: 'en',
+    backend: {
+      loadPath: __dirname+'/locales/{{lng}}.json',
+    },
+    detection: {
+      order: ['header','querystring'],
+      lookupQuerystring: 'lang',
+    }
+  });
+app.use(handle(i18next));
+
 app.use(helmet());
 app.use(compression());
 if(process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-const READ_MAX = process.env.NODE_ENV === 'production' ? 1200 : 100;
-const WRITE_MAX = process.env.NODE_ENV === 'production' ? 200 : 50;
+const READ_MAX = process.env.NODE_ENV === 'production' ? 1800 : 1000;
+const WRITE_MAX = process.env.NODE_ENV === 'production' ? 200 : 100;
 const readLimiter = rateLimit({
   windowMs:60 * 60 * 1000,
   max:READ_MAX,
@@ -82,21 +97,6 @@ app.use(
     })
 );
 
-i18next
-  .use(i18Backend)
-  .use(LanguageDetector)
-  .init({
-    fallbackLng: 'en',
-    backend: {
-      loadPath: __dirname+'/locales/{{lng}}.json',
-    },
-    detection: {
-      order: ['header','querystring'],
-      lookupQuerystring: 'lang',
-    }
-  });
-app.use(handle(i18next));
-
 //revisar el tema puertos para el deploy, temporal
 
 const apiUrl = `/api/v1/`
@@ -114,6 +114,10 @@ app.get(`${apiUrl}healthcheck`, (req,res) => {
     message: 'OK',
     data: {},
   })
+})
+
+app.all('*', (req, res, next) => {
+  next(new AppError(`${req.originalUrl} can't be found on the server`, 404));
 })
 
 app.use((err, req, res, next) => {
@@ -137,9 +141,5 @@ app.use((err, req, res, next) => {
     errors: 'Something went wrong!',
   });
 });
-
-app.all('*', (req, res, next) => {
-  next(new AppError(`${req.originalUrl} can't be found on the server`, 404));
-})
 
 module.exports = app;

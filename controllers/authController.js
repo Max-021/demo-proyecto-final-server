@@ -128,6 +128,8 @@ exports.login = catchAsync(async (req,res,next) => {
 
     const user = await User.findOne({mail}).select("+password");
 
+    if(!user) return next(new AppError('auth.login.noUser', 401))
+
     if(user.lockUntil && user.lockUntil > Date.now()){
         const diffMs = user.lockUntil - Date.now();
         const minutes = Math.floor(diffMs / 60000);
@@ -138,7 +140,6 @@ exports.login = catchAsync(async (req,res,next) => {
         }));
     }
     
-    if(!user) return next(new AppError('auth.login.noUser', 401))
     if(!(await user.correctPassword(password, user.password))) {
         if(user.lastLoginAttemptTime && ((Date.now() - user.lastLoginAttemptTime) > (60*60*1000))) {
             user.loginAttempts = 0;
@@ -292,11 +293,11 @@ exports.resetPassword = catchAsync(async (req,res,next) => {
 })
 exports.validateResetToken = catchAsync(async (req,res,next) => {
     const hashedToken = crypto.createHash("sha256").update(req.params.token).digest('hex');
-    
+
     const user = await User.findOne({passwordResetToken: hashedToken, passwordResetExpires: { $gt: Date.now()}});
 
     if(!user) return next(new AppError("auth.validateResetToken.noUser", 400));
-    
+
     res.status(200).json({status: 'success'});
 })
 
@@ -365,6 +366,25 @@ exports.validatePasswordRules = catchAsync(async (req,res,next) => {//es un midd
 exports.validatePasswordStatus = catchAsync(async (req,res,next) => {
     const {password} = req.body;
     const {username, mail, firstName, lastName} = req.user;
+
+    if(passwordValidation.isDerivedFromUser(password, {username, mail, firstName, lastName})) return next(new AppError('auth.validatePasswordStatus.derivedPassword', 400));
+    if(passwordValidation.isWeakPassword(password)) return next(new AppError('auth.validatePasswordStatus.weakPassword', 400));
+
+    res.status(200).json({
+        status: 'success',
+        data: {message: 'Password is Ok!'},
+    })
+})
+
+exports.validateRulesPasswordReset = catchAsync(async (req,res,next) => {
+    const {password} = req.body;
+    const hashedToken = crypto.createHash("sha256").update(req.params.token).digest('hex');
+
+    const user = await User.findOne({passwordResetToken: hashedToken, passwordResetExpires: { $gt: Date.now()}});
+
+    if(!user) return next(new AppError("auth.validateResetToken.noUser", 400));
+
+    const {username, mail, firstName, lastName} = user;
 
     if(passwordValidation.isDerivedFromUser(password, {username, mail, firstName, lastName})) return next(new AppError('auth.validatePasswordStatus.derivedPassword', 400));
     if(passwordValidation.isWeakPassword(password)) return next(new AppError('auth.validatePasswordStatus.weakPassword', 400));
