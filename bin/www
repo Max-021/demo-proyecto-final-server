@@ -20,7 +20,7 @@ mongoose.connect(DB)
 .catch((err) => console.log(err))
 
 // Get port from environment and store in Express.
-const port = normalizePort(process.env.PORT || '9000');//revisar esto para el deploy
+const port = normalizePort(process.env.PORT || '5000');//revisar esto para el deploy
 app.set('port', port);
 
 //Create http server
