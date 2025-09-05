@@ -85,7 +85,7 @@ app.use(express.urlencoded({extended: true,limit:'10kb'}));
 app.use(cookieParser());
 
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS.split(','),
+  origin: ['http://149.50.141.130:3002'],
   credentials: true,
 }));
 
